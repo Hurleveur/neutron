@@ -11,8 +11,12 @@
 #include <learnopengl/shader.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
+#include <learnopengl/particle_generator.h>
+#include <learnopengl/resource_manager.h>
 
 #include <iostream>
+
+using namespace glm;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -26,7 +30,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(vec3(0.0f, 0.0f, 3.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -34,6 +38,13 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// particles
+ParticleGenerator* Particles;
+
+// Instantiate static variables
+std::map<std::string, Texture2D>    ResourceManager::Textures;
+std::map<std::string, Shader2>       ResourceManager::Shaders;
 
 int main()
 {
@@ -43,6 +54,13 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // init particles
+    ResourceManager::LoadTexture(FileSystem::getPath("resources/textures/particle.png").c_str(), true, "particle");
+    ResourceManager::LoadShader(FileSystem::getPath("resources/shaders/particle.vs").c_str(),
+                                FileSystem::getPath("resources/shaders/particle.fs").c_str(),
+                    nullptr, "particle");
+    Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -92,14 +110,14 @@ int main()
     // generate a large list of semi-random model transformation matrices
     // ------------------------------------------------------------------
     unsigned int amount = 100000;
-    glm::mat4* modelMatrices;
-    modelMatrices = new glm::mat4[amount];
+    mat4* modelMatrices;
+    modelMatrices = new mat4[amount];
     srand(static_cast<unsigned int>(glfwGetTime())); // initialize random seed
     float radius = 150.0;
     float offset = 25.0f;
     for (unsigned int i = 0; i < amount; i++)
     {
-        glm::mat4 model = glm::mat4(1.0f);
+        mat4 model = mat4(1.0f);
         // 1. translation: displace along circle with 'radius' in range [-offset, offset]
         float angle = (float)i / (float)amount * 360.0f;
         float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
@@ -108,15 +126,15 @@ int main()
         float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
         displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
         float z = cos(angle) * radius + displacement;
-        model = glm::translate(model, glm::vec3(x, y, z));
+        model = translate(model, vec3(x, y, z));
 
         // 2. scale: Scale between 0.05 and 0.25f
         float scale = static_cast<float>((rand() % 20) / 100.0 + 0.05);
-        model = glm::scale(model, glm::vec3(scale));
+        model = glm::scale(model, vec3(scale));
 
         // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
         float rotAngle = static_cast<float>((rand() % 360));
-        model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+        model = rotate(model, rotAngle, vec3(0.4f, 0.6f, 0.8f));
 
         // 4. now add to list of matrices
         modelMatrices[i] = model;
@@ -127,7 +145,7 @@ int main()
     unsigned int buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(mat4), &modelMatrices[0], GL_STATIC_DRAW);
 
     // set transformation matrices as an instance vertex attribute (with divisor 1)
     // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
@@ -139,13 +157,13 @@ int main()
         glBindVertexArray(VAO);
         // set attribute pointers for matrix (4 times vec4)
         glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)0);
         glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)(sizeof(vec4)));
         glEnableVertexAttribArray(5);
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)(2 * sizeof(vec4)));
         glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(mat4), (void*)(3 * sizeof(vec4)));
 
         glVertexAttribDivisor(3, 1);
         glVertexAttribDivisor(4, 1);
@@ -306,12 +324,17 @@ int main()
 
         // render
         // ------
+
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // particles
+        Particles->Update(deltaTime, vec2(0.0,0.0), 2, vec2(0.0,0.0));
+        Particles->Draw();
+
         // configure transformation matrices
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        mat4 projection = perspective(radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
+        mat4 view = camera.GetViewMatrix();
         asteroidShader.use();
         asteroidShader.setMat4("projection", projection);
         asteroidShader.setMat4("view", view);
@@ -320,9 +343,9 @@ int main()
         planetShader.setMat4("view", view);
 
         // draw planet
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+        mat4 model = mat4(1.0f);
+        model = translate(model, vec3(0.0f, -3.0f, 0.0f));
+        model = scale(model, vec3(4.0f, 4.0f, 4.0f));
         planetShader.setMat4("model", model);
         planet.Draw(planetShader);
 
@@ -353,7 +376,7 @@ int main()
         // draw skybox as last
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
         skyboxShader.use();
-        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
+        view = mat4(mat3(camera.GetViewMatrix())); // remove translation from the view matrix
         skyboxShader.setMat4("view", view);
         skyboxShader.setMat4("projection", projection);
         // skybox cube
