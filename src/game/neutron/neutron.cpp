@@ -87,6 +87,7 @@ int main()
     Shader skyboxShader("6.1.skybox.vs", "6.1.skybox.fs");
     Shader asteroidShader("10.3.asteroids.vs", "10.3.asteroids.fs");
     Shader planetShader("10.3.planet.vs", "10.3.planet.fs");
+    Shader shipShader(FileSystem::getPath("src/game/neutron/ship.vs").c_str(), FileSystem::getPath("src/game/neutron/ship.fs").c_str());
 
     // load models
     // -----------
@@ -366,12 +367,34 @@ int main()
         }
 
         // draw ship
+        /*
+        shipShader.use();
+        shipShader.setMat4("projection", projection);
+        shipShader.setMat4("view", view); */
+
+
+        // this assign the texture of index 0 to the "texture" variable in the shader.
+        // Problem 1 : I tried making a shaderShip but it doesn't work. Idk why, even when it's a duplicate of shader...
         shader.use();
-        shader.setInt("texture_diffuse1", 0);
+        shader.setInt("texture", 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, ship.texture_list[0].textureID);
-        for (unsigned int i = 0; i < ship.mesh_list.size(); i++)
+
+        // this assign the texture of index i to the "texture"+i variable in the shader. This should work
+        // Problem 2 : the shader only applies the first texture to the whole ship. Logic, that's what's written in the shader code
+        // But idk how to draw the textures at the correct place, can't find anything online about it. Might need to watch very long tutos
+        // Problem 3 : it actually doesn't draw the texture, only a single color. But the color changes depending on the index so clearly it depends on the texture
+        /* for (unsigned int i = 0; i < ship.texture_list.size(); i++)
         {
+            //cout << ship.texture_list[i].image_name << "\n";
+            glActiveTexture(GL_TEXTURE0 + i);
+            shader.setInt("texture"+to_string(i+1), i);
+            glBindTexture(GL_TEXTURE_2D, ship.texture_list[i].textureID);
+        }
+        glActiveTexture(GL_TEXTURE0); */
+
+        // this draws the mesh
+        for (unsigned int i = 0; i < ship.mesh_list.size(); i++) {
             glBindVertexArray(ship.mesh_list[i].VAO);
             glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(ship.mesh_list[i].vert_indices.size()), GL_UNSIGNED_INT, 0, amount);
             glBindVertexArray(0);
