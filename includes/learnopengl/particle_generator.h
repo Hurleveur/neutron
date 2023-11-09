@@ -14,7 +14,7 @@
 #include <glm/glm.hpp>
 
 #include <learnopengl/texture.h>
-#include <learnopengl/shader2.h>
+#include <learnopengl/shader.h>
 
 
 // Represents a single particle and its state
@@ -34,117 +34,120 @@ class ParticleGenerator
 {
 public:
     // constructor
-    ParticleGenerator(Shader2 shader, Texture2D texture, unsigned int amount){
-    this->init();
-}
+    ParticleGenerator(Shader shader, Texture2D texture, unsigned int amount) :
+            shader(shader), texture(texture), amount(amount) {
+        this->init();
+    }
+
     // update all particles
     void Update(float dt, glm::vec2 pos, unsigned int newParticles, glm::vec2 offset = glm::vec2(0.0f, 0.0f))
     {
-    // add new particles
-    for (unsigned int i = 0; i < newParticles; ++i)
-    {
-        int unusedParticle = this->firstUnusedParticle();
-        this->respawnParticle(this->particles[unusedParticle], pos, offset);
-    }
-    // update all particles
-    for (unsigned int i = 0; i < this->amount; ++i)
-    {
-        Particle &p = this->particles[i];
-        p.Life -= dt; // reduce life
-        if (p.Life > 0.0f)
-        {	// particle is alive, thus update
-            p.Position -= p.Velocity * dt;
-            p.Color.a -= dt * 2.5f;
+        // add new particles
+        for (unsigned int i = 0; i < newParticles; ++i)
+        {
+            int unusedParticle = this->firstUnusedParticle();
+            this->respawnParticle(this->particles[unusedParticle], pos, offset);
+        }
+        // update all particles
+        for (unsigned int i = 0; i < this->amount; ++i)
+        {
+            Particle &p = this->particles[i];
+            p.Life -= dt; // reduce life
+            if (p.Life > 0.0f)
+            {	// particle is alive, thus update
+                p.Position -= p.Velocity * dt;
+                p.Color.a -= dt * 2.5f;
+            }
         }
     }
-}
+
     // render all particles
     void Draw(){
-    // use additive blending to give it a 'glow' effect
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    this->shader.Use();
-    for (Particle particle : this->particles)
-    {
-        if (particle.Life > 0.0f)
+        // use additive blending to give it a 'glow' effect
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        this->shader.Use();
+        for (Particle particle : this->particles)
         {
-            this->shader.SetVector2f("offset", particle.Position);
-            this->shader.SetVector4f("color", particle.Color);
-            this->texture.Bind();
-            glBindVertexArray(this->VAO);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-            glBindVertexArray(0);
+            if (particle.Life > 0.0f)
+            {
+                this->shader.setVec2("offset", particle.Position);
+                this->shader.setVec4("color", particle.Color);
+                this->texture.Bind();
+                glBindVertexArray(this->VAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+            }
         }
+        // don't forget to reset to default blending mode
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
-    // don't forget to reset to default blending mode
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
 
 private:
     // state
     std::vector<Particle> particles;
     unsigned int amount;
     // render state
-    Shader2 shader;
+    Shader shader;
     Texture2D texture;
     unsigned int VAO;
     unsigned int lastUsedParticle = 0;
     // initializes buffer and vertex attributes
     void init(){
-    // set up mesh and attribute properties
-    unsigned int VBO;
-    float particle_quad[] = {
-        0.0f, 1.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.0f,
+        // set up mesh and attribute properties
+        unsigned int VBO;
+        float particle_quad[] = {
+            0.0f, 1.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
 
-        0.0f, 1.0f, 0.0f, 1.0f,
-        1.0f, 1.0f, 1.0f, 1.0f,
-        1.0f, 0.0f, 1.0f, 0.0f
-    };
-    glGenVertexArrays(1, &this->VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(this->VAO);
-    // fill mesh buffer
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(particle_quad), particle_quad, GL_STATIC_DRAW);
-    // set mesh attributes
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glBindVertexArray(0);
+            0.0f, 1.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 0.0f, 1.0f, 0.0f
+        };
+        glGenVertexArrays(1, &this->VAO);
+        glGenBuffers(1, &VBO);
+        glBindVertexArray(this->VAO);
+        // fill mesh buffer
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(particle_quad), particle_quad, GL_STATIC_DRAW);
+        // set mesh attributes
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glBindVertexArray(0);
 
-    // create this->amount default particle instances
-    for (unsigned int i = 0; i < this->amount; ++i)
-        this->particles.push_back(Particle());
-}
-    // returns the first Particle index that's currently unused e.g. Life <= 0.0f or 0 if no particle is currently inactive
-    unsigned int firstUnusedParticle(){
-    // first search from last used particle, this will usually return almost instantly
-    for (unsigned int i = lastUsedParticle; i < this->amount; ++i){
-        if (this->particles[i].Life <= 0.0f){
-            lastUsedParticle = i;
-            return i;
-        }
+        // create this->amount default particle instances
+        for (unsigned int i = 0; i < this->amount; ++i)
+            this->particles.push_back(Particle());
     }
-    // otherwise, do a linear search
-    for (unsigned int i = 0; i < lastUsedParticle; ++i){
-        if (this->particles[i].Life <= 0.0f){
-            lastUsedParticle = i;
-            return i;
+        // returns the first Particle index that's currently unused e.g. Life <= 0.0f or 0 if no particle is currently inactive
+        unsigned int firstUnusedParticle(){
+        // first search from last used particle, this will usually return almost instantly
+        for (unsigned int i = lastUsedParticle; i < this->amount; ++i){
+            if (this->particles[i].Life <= 0.0f){
+                lastUsedParticle = i;
+                return i;
+            }
         }
+        // otherwise, do a linear search
+        for (unsigned int i = 0; i < lastUsedParticle; ++i){
+            if (this->particles[i].Life <= 0.0f){
+                lastUsedParticle = i;
+                return i;
+            }
+        }
+        // all particles are taken, override the first one (note that if it repeatedly hits this case, more particles should be reserved)
+        lastUsedParticle = 0;
+        return 0;
     }
-    // all particles are taken, override the first one (note that if it repeatedly hits this case, more particles should be reserved)
-    lastUsedParticle = 0;
-    return 0;
-}
-    // respawns particle
-    void respawnParticle(Particle &particle, glm::vec2 pos, glm::vec2 offset = glm::vec2(0.0f, 0.0f)){
-    float random = ((rand() % 100) - 50) / 10.0f;
-    float rColor = 0.5f + ((rand() % 100) / 100.0f);
-    particle.Position = pos + random + offset;
-    particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
-    particle.Life = 1.0f;
-    //particle.Velocity = object.Velocity * 0.1f;
-}
+        // respawns particle
+        void respawnParticle(Particle &particle, glm::vec2 pos, glm::vec2 offset = glm::vec2(0.0f, 0.0f)){
+        float random = ((rand() % 100) - 50) / 10.0f;
+        float rColor = 0.5f + ((rand() % 100) / 100.0f);
+        particle.Position = pos + random + offset;
+        particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
+        particle.Life = 1.0f;
+        //particle.Velocity = object.Velocity * 0.1f;
+    }
 };
 
 #endif

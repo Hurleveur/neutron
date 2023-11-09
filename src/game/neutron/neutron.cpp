@@ -7,7 +7,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <learnopengl/filesystem.h>
-#include <learnopengl/shader_m.h>
 #include <learnopengl/shader.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
@@ -39,13 +38,6 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// particles
-ParticleGenerator* Particles;
-
-// Instantiate static variables
-std::map<std::string, Texture2D>    ResourceManager::Textures;
-std::map<std::string, Shader2>       ResourceManager::Shaders;
-
 int main()
 {
     // glfw: initialize and configure
@@ -54,13 +46,6 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // init particles
-    ResourceManager::LoadTexture(FileSystem::getPath("resources/textures/particle.png").c_str(), true, "particle");
-    ResourceManager::LoadShader(FileSystem::getPath("resources/shaders/particle.vs").c_str(),
-                                FileSystem::getPath("resources/shaders/particle.fs").c_str(),
-                    nullptr, "particle");
-    Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -100,7 +85,8 @@ int main()
     Shader shader("6.1.cubemaps.vs", "6.1.cubemaps.fs");
     Shader skyboxShader("6.1.skybox.vs", "6.1.skybox.fs");
     Shader asteroidShader("10.3.asteroids.vs", "10.3.asteroids.fs");
-    Shader planetShader("10.3.planet.vs", "10.3.planet.fs");
+    Shader planetShader("10.3.planet.vs", "10.3.planet.fs");    // init particles
+    Shader particleShader("particle.vs", "particle.fs");
 
     // load models
     // -----------
@@ -300,6 +286,8 @@ int main()
     };
     unsigned int cubemapTexture = loadCubemap(faces);
 
+    Texture2D particleTexture = ResourceManager::loadTextureFromFile(FileSystem::getPath("resources/textures/background.jpg").c_str(), true);
+
     // shader configuration
     // --------------------
     shader.use();
@@ -308,6 +296,10 @@ int main()
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
 
+    particleShader.use();
+    particleShader.setInt("particle", 0);
+
+    ParticleGenerator particles = ParticleGenerator(particleShader, particleTexture, 500);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -328,10 +320,6 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // particles
-        Particles->Update(deltaTime, vec2(0.0,0.0), 2, vec2(0.0,0.0));
-        Particles->Draw();
-
         // configure transformation matrices
         mat4 projection = perspective(radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         mat4 view = camera.GetViewMatrix();
@@ -341,13 +329,18 @@ int main()
         planetShader.use();
         planetShader.setMat4("projection", projection);
         planetShader.setMat4("view", view);
-
         // draw planet
         mat4 model = mat4(1.0f);
         model = translate(model, vec3(0.0f, -3.0f, 0.0f));
         model = scale(model, vec3(4.0f, 4.0f, 4.0f));
         planetShader.setMat4("model", model);
+
         planet.Draw(planetShader);
+        particleShader.setMat4("view", view);
+        particleShader.setMat4("projection", projection);
+        particleShader.setMat4("model", model);
+        particles.Update(deltaTime, vec2(1000.0, 0.0), 2, vec2(1000.0, 0.0));
+        particles.Draw();
 
         // draw meteorites
         asteroidShader.use();

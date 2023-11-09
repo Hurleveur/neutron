@@ -15,14 +15,13 @@
 #include <glad/glad.h>
 
 #include <learnopengl/texture.h>
-#include <learnopengl/shader2.h>
+#include <learnopengl/shader.h>
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
 
 #include "stb_image.h"
-
 
 // A static singleton ResourceManager class that hosts several
 // functions to load Textures and Shaders. Each loaded texture
@@ -33,16 +32,11 @@ class ResourceManager
 {
 public:
     // resource storage
-    static std::map<std::string, Shader2> Shaders;
+    static std::map<std::string, Shader> Shaders;
     static std::map<std::string, Texture2D> Textures;
 
-    // loads (and generates) a shader program from file loading vertex, fragment (and geometry) shader's source code. If gShaderFile is not nullptr, it also loads a geometry shader
-    static Shader2 LoadShader(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile, std::string name){
-    Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
-    return Shaders[name];
-}
     // retrieves a stored sader
-    static Shader2 GetShader(std::string name){
+    static Shader GetShader(std::string name){
     return Shaders[name];
 }
     // loads (and generates) a texture from file
@@ -66,49 +60,7 @@ public:
 private:
     // private constructor, that is we do not want any actual resource manager objects. Its members and functions should be publicly available (static).
     ResourceManager() { }
-    // loads and generates a shader from file
-    static Shader2 loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile = nullptr){
-    // 1. retrieve the vertex/fragment source code from filePath
-    std::string vertexCode;
-    std::string fragmentCode;
-    std::string geometryCode;
-    try
-    {
-        // open files
-        std::ifstream vertexShaderFile(vShaderFile);
-        std::ifstream fragmentShaderFile(fShaderFile);
-        std::stringstream vShaderStream, fShaderStream;
-        // read file's buffer contents into streams
-        vShaderStream << vertexShaderFile.rdbuf();
-        fShaderStream << fragmentShaderFile.rdbuf();
-        // close file handlers
-        vertexShaderFile.close();
-        fragmentShaderFile.close();
-        // convert stream into string
-        vertexCode = vShaderStream.str();
-        fragmentCode = fShaderStream.str();
-        // if geometry shader path is present, also load a geometry shader
-        if (gShaderFile != nullptr)
-        {
-            std::ifstream geometryShaderFile(gShaderFile);
-            std::stringstream gShaderStream;
-            gShaderStream << geometryShaderFile.rdbuf();
-            geometryShaderFile.close();
-            geometryCode = gShaderStream.str();
-        }
-    }
-    catch (std::exception e)
-    {
-        std::cout << "ERROR::SHADER: Failed to read shader files" << std::endl;
-    }
-    const char *vShaderCode = vertexCode.c_str();
-    const char *fShaderCode = fragmentCode.c_str();
-    const char *gShaderCode = geometryCode.c_str();
-    // 2. now create shader object from source code
-    Shader2 shader;
-    shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
-    return shader;
-}
+    public:
     // loads a single texture from file
     static Texture2D loadTextureFromFile(const char *file, bool alpha){
     // create texture object
@@ -128,5 +80,12 @@ private:
     return texture;
 }
 };
+
+
+
+// Instantiate static variables
+std::map<std::string, Texture2D>    ResourceManager::Textures;
+std::map<std::string, Shader>  ResourceManager::Shaders;
+
 
 #endif
