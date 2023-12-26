@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "init_helper.h"
 
 // These functions are not specic to this one game and just help setting an interactive window up.
 

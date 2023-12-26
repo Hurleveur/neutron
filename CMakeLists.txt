@@ -81,9 +81,10 @@ endmacro()
 file(GLOB SOURCE
         "src/neutron/*.h"
         "src/neutron/*.cpp"
+        "src/neutron/*/*.h"
         "src/neutron/*/*.cpp"
-        "src/neutron/*/*.vs"
-        "src/neutron/*/*.fs"
+        "src/neutron/*.vs"
+        "src/neutron/*.fs"
         "src/neutron/*.tcs"
         "src/neutron/*.tes"
         "src/neutron/*.gs"

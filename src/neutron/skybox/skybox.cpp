@@ -1,7 +1,10 @@
-#include "../textures.cpp"
-#include <learnopengl/shader.h>
+#include "../textures.h"
+#include "skybox.h"
 #include <learnopengl/filesystem.h>
-
+#include <iostream>
+#include <glad/glad.h>
+#include <learnopengl/shader.h>
+#include <GLFW/glfw3.h>
 
 constexpr float skyboxVertices[] = {
     // positions
@@ -48,10 +51,9 @@ constexpr float skyboxVertices[] = {
      1.0f, -1.0f,  1.0f
 };
 unsigned int skyboxVAO, skyboxVBO;
-Shader skyboxShader("skybox.vs", "skybox.fs");
 unsigned int cubemapTexture;
 
-void makeSkybox()
+void makeSkybox(Shader &skyboxShader)
 {
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -75,7 +77,7 @@ void makeSkybox()
     skyboxShader.setInt("skybox", 0);
 }
 
-void drawSkybox(glm::mat4 view, glm::mat4 projection)
+void drawSkybox(Shader &skyboxShader, glm::mat4 view, glm::mat4 projection)
 {
     // draw skybox as last
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content

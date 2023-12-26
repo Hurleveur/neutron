@@ -1,13 +1,15 @@
 #include "globals.h"
-#include "init_helper.cpp"
-#include "skybox/skybox.cpp"
+#include "init_helper.h"
+#include "skybox/skybox.h"
+#include <learnopengl/shader.h>
 
 int main() {
     GLFWwindow *window = init();
     if (!window)
         return -1;
 
-    makeSkybox();
+    Shader skyboxShader("skybox.vs", "skybox.fs");
+    makeSkybox(skyboxShader);
 
     float currentFrame;
     while (!glfwWindowShouldClose(window))
@@ -28,7 +30,7 @@ int main() {
 
         // skybox
         view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
-        drawSkybox(view, projection);
+        drawSkybox(skyboxShader, view, projection);
 
 
         // clear for next frame

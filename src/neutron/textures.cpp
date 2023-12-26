@@ -1,10 +1,8 @@
 #include <stb_image.h>
 #include <glad/glad.h>
+#include "textures.h"
 
 #include <iostream>
-#include <vector>
-#include <string>
-#include <learnopengl/shader.h>
 
 // utility function for loading a 2D texture from file
 unsigned int loadTexture(char const* path)
