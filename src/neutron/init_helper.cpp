@@ -2,7 +2,6 @@
 
 // These functions are not specic to this one game and just help setting an interactive window up.
 
-
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
