@@ -1,5 +1,5 @@
 # learnopengl.com code repository
-Contains code samples for all chapters of Learn OpenGL and [https://learnopengl.com](https://learnopengl.com). 
+Contains code samples from Learn OpenGL and [https://learnopengl.com](https://learnopengl.com), used to set up the project with the right libraries, and as a template for this readme. 
 
 ## Windows building
 All relevant libraries are found in /libs and all DLLs found in /dlls (pre-)compiled for Windows. 
