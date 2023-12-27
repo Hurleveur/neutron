@@ -12,9 +12,7 @@
 #include "skybox/skybox.h"
 #include <iostream>
 #include <vector>
-#include <learnopengl/filesystem.h>
 
-#include "planet/planet.h"
 
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -48,42 +46,8 @@ int main()
     // -------------------------
     Shader skyboxShader("skybox.vs", "skybox.fs");
     makeSkybox(skyboxShader);
-    Shader planetShader("planet/planet.vs", "planet/planet.fs");
-
-    // spawn planet
-    float radius = 1.0f;
-    int sectorCount = 36;
-    int stackCount = 18;
-
-    std::vector<float> vertices, normals, texCoords;
-    generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords);
-    // Generate mipmapped texture
-    //GLuint planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
-    // create vao and vbo
-    GLuint VAO, VBO[3];
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(3, VBO);
-
-    glBindVertexArray(VAO);
-
-    // Bind and set vertex data (position, normal, and texture coordinates)
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(float), texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    Shader planetShader("planet.vs", "planet.fs");
+    makePlanet(planetShader);
 
     // render loop
     // -----------
@@ -104,24 +68,13 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        drawSkybox(skyboxShader, view, projection);
+        //drawPlanet(planetShader, view, projection);
 
-        // planet
-        planetShader.use();
-        glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, planetTextureID);
-        // Render the sphere
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size() / 3);
-        glBindVertexArray(0);
+        drawSkybox(skyboxShader, view, projection);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    // delete planet
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(3, VBO);
 
     glfwTerminate();
     return 0;
