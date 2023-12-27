@@ -48,7 +48,7 @@ void generateSphere(float radius, int sectorCount, int stackCount, vector<float>
 // Function to generate mipmapped texture
 GLuint generateMipmappedTexture(const char* imagePath) {
     int width, height, nrChannels;
-    unsigned char* data = stbi_load(imagePath, &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load(imagePath, &width, &height, &nrChannels, 4);
     if (!data) {
         cerr << "Failed to load texture: " << imagePath << endl;
         return 0;

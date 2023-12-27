@@ -68,7 +68,7 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        //drawPlanet(planetShader, view, projection);
+        drawPlanet(planetShader, view, projection);
 
         drawSkybox(skyboxShader, view, projection);
 
