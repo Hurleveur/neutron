@@ -2,6 +2,11 @@
 #include "init_helper.h"
 #include "skybox/skybox.h"
 #include <learnopengl/shader.h>
+#include <learnopengl/filesystem.h>
+#include "textures.h"
+#include <glm/glm.hpp>
+#include <learnopengl/camera.h>
+#include <learnopengl/model.h>
 
 int main() {
     GLFWwindow *window = init();
@@ -10,7 +15,7 @@ int main() {
 
     Shader skyboxShader("skybox.vs", "skybox.fs");
     makeSkybox(skyboxShader);
-
+    
     float currentFrame;
     while (!glfwWindowShouldClose(window))
     {
@@ -24,12 +29,11 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        // skybox
-        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
+        
         drawSkybox(skyboxShader, view, projection);
 
 

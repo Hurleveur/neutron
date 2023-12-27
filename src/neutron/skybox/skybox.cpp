@@ -4,7 +4,6 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <learnopengl/shader.h>
-#include <GLFW/glfw3.h>
 
 constexpr float skyboxVertices[] = {
     // positions
@@ -77,12 +76,12 @@ void makeSkybox(Shader &skyboxShader)
     skyboxShader.setInt("skybox", 0);
 }
 
-void drawSkybox(Shader &skyboxShader, glm::mat4 view, glm::mat4 projection)
+void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection)
 {
     // draw skybox as last
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     skyboxShader.use();
-    skyboxShader.setMat4("view", view);
+    skyboxShader.setMat4("view", glm::mat3(view));
     skyboxShader.setMat4("projection", projection);
     // skybox cube
     glBindVertexArray(skyboxVAO);
