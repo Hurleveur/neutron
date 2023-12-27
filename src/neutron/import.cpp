@@ -4,7 +4,10 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <learnopengl/shader.h>
-#include "../planet.h"
+#include "planet.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 constexpr float skyboxVertices[] = {
     // positions
@@ -131,6 +134,9 @@ void makePlanet(Shader& planetShader)
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    planetShader.use();
+    planetShader.setInt("skybox", 0);
 }
 
 
@@ -140,6 +146,10 @@ void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     planetShader.use();
     planetShader.setMat4("view", view);
     planetShader.setMat4("projection", projection);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+    planetShader.setMat4("model", model);
     glBindVertexArray(VAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
