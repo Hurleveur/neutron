@@ -1,3 +1,5 @@
+#include "import.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
@@ -9,7 +11,6 @@
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
-#include "skybox/skybox.h"
 #include <iostream>
 #include <vector>
 
@@ -79,6 +80,8 @@ int main()
     glfwTerminate();
     return 0;
 }
+
+
 
 GLFWwindow* init() {
     glfwInit();
