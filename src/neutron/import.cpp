@@ -1,5 +1,5 @@
-#include "../textures.h"
-#include "skybox.h"
+#include "textures.h"
+#include "import.h"
 #include <learnopengl/filesystem.h>
 #include <iostream>
 #include <glad/glad.h>
