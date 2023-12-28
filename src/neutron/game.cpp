@@ -52,11 +52,11 @@ int main()
     makeSkybox(skyboxShader);
 
     Shader sunShader("planet.vs", "planet.fs");
-    Planet sun(1000, 5, 0, 15, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
+    Planet sun(10000, 5, 0, 15, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
     objectList.emplace_back(&sun);
 
     Shader planetShader("planet.vs", "planet.fs");
-    Planet earth(10, 1, 0, 0, 0, 0, 0, 0, planetShader, "resources/textures/planet.jpg");
+    Planet earth(10, 1, 0, 0, 0, 0.0005, 0, 0, planetShader, "resources/textures/planet.jpg");
     objectList.emplace_back(&earth);
 
     Shader moonShader("planet.vs", "planet.fs");
@@ -73,7 +73,7 @@ int main()
         lastFrame = currentFrame;
 
         // doesnt delete on collision detect yet
-        //Step(deltaTime);
+        Step(deltaTime * 100);
 
         processInput(window);
 
@@ -211,9 +211,9 @@ SpaceObject *Step(double time)
             continue;
         // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
         double pull = gravitational * object->mass / object->DistanceFrom(*sun) * time;
-        object->vX += pull * (sun->x > object->x) ? -0.01 : 0.01;
-        object->vY += pull * (sun->y > object->y) ? -0.01 : 0.01;
-        object->vZ += pull * (sun->z > object->z) ? -0.01 : 0.01;
+        object->vX += pull * ((sun->x < object->x) ? -1 : 1);
+        object->vY += pull * ((sun->y < object->y) ? -1 : 1);
+        object->vZ += pull * ((sun->z < object->z) ? -1 : 1);
     }
     for (SpaceObject* object : objectList)
         object->Tick(time);
