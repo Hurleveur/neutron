@@ -8,6 +8,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "particle_generator.h"
+
+using namespace glm;
 
 constexpr float skyboxVertices[] = {
     // positions
@@ -56,9 +59,11 @@ constexpr float skyboxVertices[] = {
 unsigned int skyboxVAO, skyboxVBO;
 unsigned int cubemapTexture;
 
+ParticleGenerator *Particles;
+
 // Generate mipmapped texture
 // create vao and vbo
-GLuint VAO, VBO[4], planetTextureID;
+GLuint VAO, VBO[4], planetTextureID, particleTextureID;
 std::vector<float> vertices, normals, texCoords;
 std::vector<unsigned int> indices;
 
@@ -86,12 +91,12 @@ void makeSkybox(Shader &skyboxShader)
     skyboxShader.setInt("skybox", 0);
 }
 
-void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection)
+void drawSkybox(Shader &skyboxShader, mat4 &view, mat4 &projection)
 {
     // draw skybox as last
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     skyboxShader.use();
-    skyboxShader.setMat4("view", glm::mat3(view));
+    skyboxShader.setMat4("view", mat3(view));
     skyboxShader.setMat4("projection", projection);
     // skybox cube
     glBindVertexArray(skyboxVAO);
@@ -141,7 +146,7 @@ void makePlanet(Shader& planetShader)
 }
 
 
-void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
+void drawPlanet(Shader &planetShader, mat4& view, mat4& projection)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -150,9 +155,9 @@ void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     planetShader.use();
     planetShader.setMat4("view", view);
     planetShader.setMat4("projection", projection);
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+    mat4 model = mat4(1.0f);
+    model = translate(model, vec3(0.0f, -3.0f, 0.0f));
+    model = scale(model, vec3(4.0f, 4.0f, 4.0f));
     planetShader.setMat4("model", model);
     glBindVertexArray(VAO);
     glActiveTexture(GL_TEXTURE0);
@@ -160,4 +165,16 @@ void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
     glBindVertexArray(0);
+}
+
+void makeParticles(Shader &particleShader) {
+    particleShader.use();
+    particleShader.setInt("particle", 0);
+    particleTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/window.png").c_str());
+    Particles = new ParticleGenerator(particleShader, particleTextureID, 500);
+}
+
+void drawParticles(Shader &particleShader, float deltaTime, mat4 view, mat4 projection) {
+    Particles->Update(deltaTime, 2);
+    Particles->Draw(view, projection);
 }
