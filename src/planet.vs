@@ -1,14 +1,9 @@
-#version 330 core
-layout (location = 0) in vec3 aPos;
+attribute vec3 v_coord;
+varying vec4 texCoords;
+uniform mat4 m,v,p;
 
-out vec3 TexCoords;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-void main()
-{
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-    TexCoords = aPos;
+void main(void) {
+    mat4 mvp = p*v*m;
+    gl_Position = mvp * vec4(v_coord, 1.0);
+    texCoords = vec4(v_coord, 1.0);
 }
