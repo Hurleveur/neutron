@@ -1,4 +1,5 @@
 #include "import.h"
+#include "spaceObject.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -22,6 +23,7 @@ void processInput(GLFWwindow* window);
 unsigned int loadTexture(const char* path);
 unsigned int loadCubemap(vector<std::string> faces);
 GLFWwindow* init();
+void Step(double time);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -58,6 +60,8 @@ int main()
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        Step(deltaTime);
 
         processInput(window);
 
@@ -176,4 +180,39 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+
+void Step(double time)
+{
+    spaceObject* sun = spaceObject::biggestMass;
+    if (!sun)
+        return;
+    static const double gravitational = sun->mass * 6.674 / 100000000000;
+    for (spaceObject* object : spaceObject::objectList)
+    {
+        if (object == sun)
+            continue;
+        // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
+        int pull = gravitational * object->mass / object->DistanceFrom(*sun) * time;
+        object->vX += pull * (sun->x > object->x) ? -1 : 1;
+        object->vY += pull * (sun->y > object->y) ? -1 : 1;
+        object->vZ += pull * (sun->z > object->z) ? -1 : 1;
+    }
+    for (spaceObject* object : spaceObject::objectList)
+        object->Tick(time);
+    // we assume at most one object destruction per tick
+    spaceObject* objectToRemove = nullptr;
+    for (spaceObject* object : spaceObject::objectList)
+    {
+        if (objectToRemove)
+            break;
+        for (spaceObject* otherObject : spaceObject::objectList)
+            if (object->DistanceFrom(*otherObject) < (object->radius + otherObject->radius))
+            {
+                objectToRemove = object->mass > otherObject->mass ? otherObject : object;
+                delete &objectToRemove;
+                break;
+            }
+    }
 }
