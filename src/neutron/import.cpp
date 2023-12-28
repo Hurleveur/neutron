@@ -98,9 +98,9 @@ void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection)
     glDepthFunc(GL_LESS); // set depth function back to default
 }
 
-spaceObject* spaceObject::biggestMass = nullptr;
+SpaceObject* SpaceObject::biggestMass = nullptr;
 
-spaceObject::spaceObject(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ) :
+SpaceObject::SpaceObject(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ) :
     mass(mass), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ) {
     if (!biggestMass || this->mass > biggestMass->mass)
         biggestMass = this;
@@ -108,14 +108,14 @@ spaceObject::spaceObject(int mass, float radius, int posX, int posY, int posZ, i
 
 
 
-void spaceObject::Tick(double time) {
+void SpaceObject::Tick(double time) {
     x += vX;
     y += vY;
     z += vZ;
 }
 
 
-double spaceObject::DistanceFrom(const spaceObject& object) const
+double SpaceObject::DistanceFrom(const SpaceObject& object) const
 {
     return std::sqrt(
         (object.x - x) * (object.x - x) +
@@ -124,12 +124,12 @@ double spaceObject::DistanceFrom(const spaceObject& object) const
     );
 }
 
-planet::planet(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ, Shader& planetShader, const char *image) :
-    spaceObject(mass, radius, posX, posY, posZ, speedX, speedY, speedZ) {
+Planet::Planet(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ, Shader& planetShader, const char *image) :
+    SpaceObject(mass, radius, posX, posY, posZ, speedX, speedY, speedZ) {
     this->makePlanet(planetShader, image);
 };
 
-void planet::makePlanet(Shader& planetShader, const char *image)
+void Planet::makePlanet(Shader& planetShader, const char *image)
 {
     int sectorCount = 36;
     int stackCount = 18;
@@ -165,7 +165,7 @@ void planet::makePlanet(Shader& planetShader, const char *image)
 }
 
 
-void planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
+void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);

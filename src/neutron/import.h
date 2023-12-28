@@ -13,12 +13,12 @@ void makeSkybox(Shader &skyboxShader);
 void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection);
 
 
-class spaceObject {
+class SpaceObject {
 public:
-	spaceObject(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ);
+	SpaceObject(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ);
 
 	void Tick(double time);
-	double DistanceFrom(const spaceObject& object) const;
+	double DistanceFrom(const SpaceObject& object) const;
 
 public:
 	int mass = 1000;
@@ -30,14 +30,14 @@ public:
 	int vY;
 	int vZ;
 
-	static std::vector<spaceObject*> objectList;
-	static spaceObject* biggestMass;
+	static std::vector<SpaceObject*> objectList;
+	static SpaceObject* biggestMass;
 };
 
 
-class planet : public spaceObject {
+class Planet : public SpaceObject {
 public:
-    planet(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ, Shader &planetShader, const char *image);
+    Planet(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ, Shader &planetShader, const char *image);
     void makePlanet(Shader& planetShader, const char *image);
     void draw(Shader& planetShader, glm::mat4& view, glm::mat4& projection);
 

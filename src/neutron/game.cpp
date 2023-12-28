@@ -22,7 +22,7 @@ void processInput(GLFWwindow* window);
 unsigned int loadTexture(const char* path);
 unsigned int loadCubemap(vector<std::string> faces);
 GLFWwindow* init();
-spaceObject *Step(double time);
+SpaceObject *Step(double time);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -38,7 +38,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-vector<planet*> objectList;
+vector<Planet*> objectList;
 
 int main()
 {
@@ -52,15 +52,15 @@ int main()
     makeSkybox(skyboxShader);
 
     Shader sunShader("planet.vs", "planet.fs");
-    planet sun(1000, .2, 0, 10, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
+    Planet sun(1000, 5, 0, 10, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
     objectList.emplace_back(&sun);
 
     Shader planetShader("planet.vs", "planet.fs");
-    planet earth(10, 1, 0, 0, 0, 0, 0, 0, planetShader, "resources/textures/planet.jpg");
+    Planet earth(10, 1, 0, 0, 0, 0, 0, 0, planetShader, "resources/textures/planet.jpg");
     objectList.emplace_back(&earth);
 
     Shader moonShader("planet.vs", "planet.fs");
-    planet moon(1, .2, 10, 0, 0, 0, 0, 0, moonShader, "resources/textures/moon.bmp");
+    Planet moon(1, .2, 10, 0, 0, 0, 0, 0, moonShader, "resources/textures/moon.bmp");
     objectList.emplace_back(&moon);
 
     // render loop
@@ -199,13 +199,13 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 
-spaceObject *Step(double time)
+SpaceObject *Step(double time)
 {
-    spaceObject* sun = spaceObject::biggestMass;
+    SpaceObject* sun = SpaceObject::biggestMass;
     if (!sun)
         return nullptr;
     static const double gravitational = sun->mass * 6.674 / 100000000000;
-    for (spaceObject* object : objectList)
+    for (SpaceObject* object : objectList)
     {
         if (object == sun)
             continue;
@@ -215,13 +215,13 @@ spaceObject *Step(double time)
         object->vY += pull * (sun->y > object->y) ? -1 : 1;
         object->vZ += pull * (sun->z > object->z) ? -1 : 1;
     }
-    for (spaceObject* object : objectList)
+    for (SpaceObject* object : objectList)
         object->Tick(time);
     // we assume at most one object destruction per tick
-    spaceObject* objectToRemove = nullptr;
-    for (spaceObject* object : objectList)
+    SpaceObject* objectToRemove = nullptr;
+    for (SpaceObject* object : objectList)
     {
-        for (spaceObject* otherObject : objectList)
+        for (SpaceObject* otherObject : objectList)
             if (otherObject != object && object->DistanceFrom(*otherObject) < (object->radius + otherObject->radius))
             {
                 objectToRemove = object->mass > otherObject->mass ? otherObject : object;
