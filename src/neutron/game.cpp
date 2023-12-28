@@ -1,5 +1,4 @@
 #include "import.h"
-#include "spaceObject.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -23,14 +22,14 @@ void processInput(GLFWwindow* window);
 unsigned int loadTexture(const char* path);
 unsigned int loadCubemap(vector<std::string> faces);
 GLFWwindow* init();
-void Step(double time);
+spaceObject *Step(double time);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(5.0f, 5.0f, 15.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -38,6 +37,8 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+vector<planet*> objectList;
 
 int main()
 {
@@ -49,8 +50,18 @@ int main()
     // -------------------------
     Shader skyboxShader("skybox.vs", "skybox.fs");
     makeSkybox(skyboxShader);
+
+    Shader sunShader("planet.vs", "planet.fs");
+    planet sun(1000, .2, 0, 10, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
+    objectList.emplace_back(&sun);
+
     Shader planetShader("planet.vs", "planet.fs");
-    makePlanet(planetShader);
+    planet earth(10, 1, 0, 0, 0, 0, 0, 0, planetShader, "resources/textures/planet.jpg");
+    objectList.emplace_back(&earth);
+
+    Shader moonShader("planet.vs", "planet.fs");
+    planet moon(1, .2, 10, 0, 0, 0, 0, 0, moonShader, "resources/textures/moon.bmp");
+    objectList.emplace_back(&moon);
 
     // render loop
     // -----------
@@ -61,7 +72,8 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        Step(deltaTime);
+        // doesnt delete on collision detect yet
+        //Step(deltaTime); yeets the moon lol
 
         processInput(window);
 
@@ -72,7 +84,11 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        drawPlanet(planetShader, view, projection);
+        sun.draw(sunShader, view, projection);
+
+        earth.draw(planetShader, view, projection);
+
+        moon.draw(moonShader, view, projection);
 
         drawSkybox(skyboxShader, view, projection);
 
@@ -183,13 +199,13 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 
-void Step(double time)
+spaceObject *Step(double time)
 {
     spaceObject* sun = spaceObject::biggestMass;
     if (!sun)
-        return;
+        return nullptr;
     static const double gravitational = sun->mass * 6.674 / 100000000000;
-    for (spaceObject* object : spaceObject::objectList)
+    for (spaceObject* object : objectList)
     {
         if (object == sun)
             continue;
@@ -199,20 +215,18 @@ void Step(double time)
         object->vY += pull * (sun->y > object->y) ? -1 : 1;
         object->vZ += pull * (sun->z > object->z) ? -1 : 1;
     }
-    for (spaceObject* object : spaceObject::objectList)
+    for (spaceObject* object : objectList)
         object->Tick(time);
     // we assume at most one object destruction per tick
     spaceObject* objectToRemove = nullptr;
-    for (spaceObject* object : spaceObject::objectList)
+    for (spaceObject* object : objectList)
     {
-        if (objectToRemove)
-            break;
-        for (spaceObject* otherObject : spaceObject::objectList)
-            if (object->DistanceFrom(*otherObject) < (object->radius + otherObject->radius))
+        for (spaceObject* otherObject : objectList)
+            if (otherObject != object && object->DistanceFrom(*otherObject) < (object->radius + otherObject->radius))
             {
                 objectToRemove = object->mass > otherObject->mass ? otherObject : object;
-                delete &objectToRemove;
-                break;
+                return objectToRemove;
             }
     }
+    return objectToRemove;
 }

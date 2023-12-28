@@ -56,11 +56,7 @@ constexpr float skyboxVertices[] = {
 unsigned int skyboxVAO, skyboxVBO;
 unsigned int cubemapTexture;
 
-// Generate mipmapped texture
-// create vao and vbo
-GLuint VAO, VBO[4], planetTextureID;
-std::vector<float> vertices, normals, texCoords;
-std::vector<unsigned int> indices;
+
 
 void makeSkybox(Shader &skyboxShader)
 {
@@ -102,16 +98,44 @@ void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection)
     glDepthFunc(GL_LESS); // set depth function back to default
 }
 
+spaceObject* spaceObject::biggestMass = nullptr;
 
-void makePlanet(Shader& planetShader)
+spaceObject::spaceObject(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ) :
+    mass(mass), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ) {
+    if (!biggestMass || this->mass > biggestMass->mass)
+        biggestMass = this;
+}
+
+
+
+void spaceObject::Tick(double time) {
+    x += vX;
+    y += vY;
+    z += vZ;
+}
+
+
+double spaceObject::DistanceFrom(const spaceObject& object) const
 {
-    // spawn planet
-    float radius = 1.0f;
+    return std::sqrt(
+        (object.x - x) * (object.x - x) +
+        (object.y - y) * (object.y - y) +
+        (object.z - z) * (object.z - z)
+    );
+}
+
+planet::planet(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ, Shader& planetShader, const char *image) :
+    spaceObject(mass, radius, posX, posY, posZ, speedX, speedY, speedZ) {
+    this->makePlanet(planetShader, image);
+};
+
+void planet::makePlanet(Shader& planetShader, const char *image)
+{
     int sectorCount = 36;
     int stackCount = 18;
 
     generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords, indices);
-    planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
+    planetTextureID = generateMipmappedTexture(FileSystem::getPath(image).c_str());
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
@@ -137,11 +161,11 @@ void makePlanet(Shader& planetShader)
     glBindVertexArray(0);
 
     planetShader.use();
-    planetShader.setInt("earth", 0);
+    planetShader.setInt(image, 0);
 }
 
 
-void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
+void planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -151,8 +175,8 @@ void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     planetShader.setMat4("view", view);
     planetShader.setMat4("projection", projection);
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+    model = glm::translate(model, glm::vec3(this->x, this->y, this->z));
+    //model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
     planetShader.setMat4("model", model);
     glBindVertexArray(VAO);
     glActiveTexture(GL_TEXTURE0);
