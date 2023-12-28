@@ -134,7 +134,7 @@ void Planet::makePlanet(Shader& planetShader, const char *image)
     int sectorCount = 36;
     int stackCount = 18;
 
-    generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords, indices);
+    generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
     planetTextureID = generateMipmappedTexture(FileSystem::getPath(image).c_str());
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -174,6 +174,7 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     planetShader.use();
     planetShader.setMat4("view", view);
     planetShader.setMat4("projection", projection);
+    planetShader.setFloat("scale", radius);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(this->x, this->y, this->z));
     //model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
