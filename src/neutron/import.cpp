@@ -106,8 +106,9 @@ void makePlanet(Shader& planetShader)
 {
     // spawn planet
     float radius = 1.0f;
-    int sectorCount = 36;
-    int stackCount = 18;
+    int sectorCount = 18;
+    // slices of the sphere
+    int stackCount = 36;
 
     generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords);
     planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
@@ -129,14 +130,14 @@ void makePlanet(Shader& planetShader)
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
     glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(float), texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     planetShader.use();
-    planetShader.setInt("skybox", 0);
+    planetShader.setInt("planet", 0);
 }
 
 
