@@ -29,7 +29,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(5.0f, 10.0f, 30.0f));
+Camera camera(glm::vec3(0.0f, -10.0f, 50.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -52,15 +52,15 @@ int main()
     makeSkybox(skyboxShader);
 
     Shader sunShader("planet.vs", "planet.fs");
-    Planet sun(10000, 5, 0, 15, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
+    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
     objectList.emplace_back(&sun);
 
     Shader planetShader("planet.vs", "planet.fs");
-    Planet earth(10, 1, 0, 0, 0, 0.0005, 0, 0, planetShader, "resources/textures/planet.jpg");
+    Planet earth(100, 1, 0, -30, 0, 0.0004, 0, 0, planetShader, "resources/textures/planet.jpg");
     objectList.emplace_back(&earth);
 
     Shader moonShader("planet.vs", "planet.fs");
-    Planet moon(1, .2, 4, 0, 0, 0, 0, 0, moonShader, "resources/textures/moon.bmp");
+    Planet moon(1, .2, -1.3, -30, 0, 0.0003, 0.00004, 0, moonShader, "resources/textures/moon.bmp");
     objectList.emplace_back(&moon);
 
     // render loop
@@ -73,7 +73,7 @@ int main()
         lastFrame = currentFrame;
 
         // doesnt delete on collision detect yet
-        Step(deltaTime * 100);
+        Step(deltaTime);
 
         processInput(window);
 
@@ -204,7 +204,7 @@ SpaceObject *Step(double time)
     SpaceObject* sun = SpaceObject::biggestMass;
     if (!sun)
         return nullptr;
-    static const double gravitational = sun->mass * 6.674 / 100000000000;
+    static const double gravitational = sun->mass * 6.674 / 1000000000000;
     for (SpaceObject* object : objectList)
     {
         for (SpaceObject* otherObject : objectList)
@@ -214,9 +214,9 @@ SpaceObject *Step(double time)
                 continue;
             // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
             double pull = gravitational * object->mass / object->DistanceFrom(*otherObject) * time;
-            object->vX += pull * ((sun->x < object->x) ? -1 : 1);
-            object->vY += pull * ((sun->y < object->y) ? -1 : 1);
-            object->vZ += pull * ((sun->z < object->z) ? -1 : 1);
+            object->vX += pull * ((sun->x < object->x) ? -0.01 : 0.01);
+            object->vY += pull * ((sun->y < object->y) ? -0.01 : 0.01);
+            object->vZ += pull * ((sun->z < object->z) ? -0.01 : 0.01);
         }
     }
     for (SpaceObject* object : objectList)
