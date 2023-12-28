@@ -100,8 +100,8 @@ void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection)
 
 SpaceObject* SpaceObject::biggestMass = nullptr;
 
-SpaceObject::SpaceObject(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ) :
-    mass(mass), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ) {
+SpaceObject::SpaceObject(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ) :
+    mass(mass), radius(radius), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ) {
     if (!biggestMass || this->mass > biggestMass->mass)
         biggestMass = this;
 }
@@ -124,7 +124,7 @@ double SpaceObject::DistanceFrom(const SpaceObject& object) const
     );
 }
 
-Planet::Planet(int mass, float radius, int posX, int posY, int posZ, int speedX, int speedY, int speedZ, Shader& planetShader, const char *image) :
+Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, const char *image) :
     SpaceObject(mass, radius, posX, posY, posZ, speedX, speedY, speedZ) {
     this->makePlanet(planetShader, image);
 };

@@ -29,7 +29,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(5.0f, 5.0f, 15.0f));
+Camera camera(glm::vec3(5.0f, 10.0f, 30.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -52,7 +52,7 @@ int main()
     makeSkybox(skyboxShader);
 
     Shader sunShader("planet.vs", "planet.fs");
-    Planet sun(1000, 5, 0, 10, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
+    Planet sun(1000, 5, 0, 15, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
     objectList.emplace_back(&sun);
 
     Shader planetShader("planet.vs", "planet.fs");
@@ -60,7 +60,7 @@ int main()
     objectList.emplace_back(&earth);
 
     Shader moonShader("planet.vs", "planet.fs");
-    Planet moon(1, .2, 10, 0, 0, 0, 0, 0, moonShader, "resources/textures/moon.bmp");
+    Planet moon(1, .2, 4, 0, 0, 0, 0, 0, moonShader, "resources/textures/moon.bmp");
     objectList.emplace_back(&moon);
 
     // render loop
@@ -73,7 +73,7 @@ int main()
         lastFrame = currentFrame;
 
         // doesnt delete on collision detect yet
-        //Step(deltaTime); yeets the moon lol
+        //Step(deltaTime);
 
         processInput(window);
 
@@ -210,10 +210,10 @@ SpaceObject *Step(double time)
         if (object == sun)
             continue;
         // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
-        int pull = gravitational * object->mass / object->DistanceFrom(*sun) * time;
-        object->vX += pull * (sun->x > object->x) ? -1 : 1;
-        object->vY += pull * (sun->y > object->y) ? -1 : 1;
-        object->vZ += pull * (sun->z > object->z) ? -1 : 1;
+        double pull = gravitational * object->mass / object->DistanceFrom(*sun) * time;
+        object->vX += pull * (sun->x > object->x) ? -0.01 : 0.01;
+        object->vY += pull * (sun->y > object->y) ? -0.01 : 0.01;
+        object->vZ += pull * (sun->z > object->z) ? -0.01 : 0.01;
     }
     for (SpaceObject* object : objectList)
         object->Tick(time);
