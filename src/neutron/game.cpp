@@ -30,7 +30,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, -10.0f, 50.0f));
+Camera camera(glm::vec3(0.0f, -60.0f, 80.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -46,6 +46,7 @@ int main()
     GLFWwindow* window = init();
     if (!window)
         return -1;
+    camera.MovementSpeed *= 2;
 
     // build and compile shaders
     // -------------------------
@@ -57,11 +58,11 @@ int main()
     objectList[&sun] = &sunShader;
 
     Shader planetShader("planet.vs", "planet.fs");
-    Planet earth(100, 1, 0, -30, 0, 0.0004, 0, 0, planetShader, "resources/textures/planet.jpg");
+    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, planetShader, "resources/textures/planet.jpg");
     objectList[&earth] = &planetShader;
 
     Shader moonShader("planet.vs", "planet.fs");
-    Planet moon(1, .2, -1.3, -30, 0, 0.0003, 0.00004, 0, moonShader, "resources/textures/moon.bmp");
+    Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, moonShader, "resources/textures/moon.bmp");
     objectList[&moon] = &moonShader;
 
     // render loop
@@ -206,25 +207,30 @@ Planet *Step(double time)
     SpaceObject* sun = SpaceObject::biggestMass;
     if (!sun)
         return nullptr;
-    static const double gravitational = sun->mass * 6.674 / 1000000000000;
+    static const double gravitational = 6.674 / 100000000000;
     for (auto object : objectList)
     {
         for (auto otherObject : objectList)
         {
-            // the sun wont be affected by the earth and the earth wont be by the moon
+            // the sun wont be affected by the earth and the earth wont be by the moon - for simplicity
             if (otherObject.first->mass <= object.first->mass)
                 continue;
-            // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
-            double pull = gravitational * object.first->mass / object.first->DistanceFrom(*otherObject.first) * time;
-            object.first->vX += pull * ((sun->x < object.first->x) ? -0.01 : 0.01);
-            object.first->vY += pull * ((sun->y < object.first->y) ? -0.01 : 0.01);
-            object.first->vZ += pull * ((sun->z < object.first->z) ? -0.01 : 0.01);
+            double distance = object.first->DistanceFrom(*otherObject.first);
+            // the earth should have a pull much stronger on the moon, because its supposed to be much closer
+            if (object.first->mass * otherObject.first->mass == 100)
+                distance /= 100;
+            double pull = otherObject.first->mass * gravitational / (distance * distance) * time;
+            object.first->vX += pull * ((otherObject.first->x < object.first->x) ? -1 : 1);
+            object.first->vY += pull * ((otherObject.first->y < object.first->y) ? -1 : 1);
+            object.first->vZ += pull * ((otherObject.first->z < object.first->z) ? -1 : 1);
         }
     }
     for (auto object : objectList)
         object.first->Tick(time);
     // we assume at most one object destruction per tick
     Planet* objectToRemove = nullptr;
+    // TODO REMOVE WHEN ORBIT FIXED BUT RN leave my moon alone!
+    return objectToRemove;
     for (auto object : objectList)
     {
         for (auto otherObject : objectList)
