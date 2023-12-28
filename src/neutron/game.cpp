@@ -207,13 +207,17 @@ SpaceObject *Step(double time)
     static const double gravitational = sun->mass * 6.674 / 100000000000;
     for (SpaceObject* object : objectList)
     {
-        if (object == sun)
-            continue;
-        // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
-        double pull = gravitational * object->mass / object->DistanceFrom(*sun) * time;
-        object->vX += pull * ((sun->x < object->x) ? -1 : 1);
-        object->vY += pull * ((sun->y < object->y) ? -1 : 1);
-        object->vZ += pull * ((sun->z < object->z) ? -1 : 1);
+        for (SpaceObject* otherObject : objectList)
+        {
+            // the sun wont be affected by the earth and the earth wont be by the moon
+            if (otherObject->mass <= object->mass)
+                continue;
+            // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
+            double pull = gravitational * object->mass / object->DistanceFrom(*otherObject) * time;
+            object->vX += pull * ((sun->x < object->x) ? -1 : 1);
+            object->vY += pull * ((sun->y < object->y) ? -1 : 1);
+            object->vZ += pull * ((sun->z < object->z) ? -1 : 1);
+        }
     }
     for (SpaceObject* object : objectList)
         object->Tick(time);
