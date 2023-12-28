@@ -58,8 +58,9 @@ unsigned int cubemapTexture;
 
 // Generate mipmapped texture
 // create vao and vbo
-GLuint VAO, VBO[3], planetTextureID;
+GLuint VAO, VBO[4], planetTextureID;
 std::vector<float> vertices, normals, texCoords;
+std::vector<unsigned int> indices;
 
 void makeSkybox(Shader &skyboxShader)
 {
@@ -109,12 +110,12 @@ void makePlanet(Shader& planetShader)
     int sectorCount = 36;
     int stackCount = 18;
 
-    generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords);
+    generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords, indices);
     planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(3, VBO);
-
     glBindVertexArray(VAO);
+
+    glGenBuffers(4, VBO);
 
     // Bind and set vertex data (position, normal, and texture coordinates)
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
@@ -142,6 +143,9 @@ void makePlanet(Shader& planetShader)
 
 void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
 {
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     // planet
     planetShader.use();
     planetShader.setMat4("view", view);
@@ -154,6 +158,6 @@ void drawPlanet(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
     // Render the sphere
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size() / 3);
+    glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
     glBindVertexArray(0);
 }
