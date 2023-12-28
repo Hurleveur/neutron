@@ -136,7 +136,7 @@ void makePlanet(Shader& planetShader)
     glBindVertexArray(0);
 
     planetShader.use();
-    planetShader.setInt("skybox", 0);
+    planetShader.setInt("earth", 0);
 }
 
 
