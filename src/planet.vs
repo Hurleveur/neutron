@@ -10,5 +10,5 @@ uniform mat4 projection;
 void main()
 {
     gl_Position = projection * view * model * vec4(aPos, 1.0);
-    TexCoords = aPos;  // Use position as texture coordinates (modify this based on your requirements)
+    TexCoords = aPos;
 }
