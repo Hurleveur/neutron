@@ -51,7 +51,7 @@ void ParticleGenerator::Draw(mat4 view, mat4 projection)
     {
         if (particle.Life > 0.0f) {
             //printf("Particle: %f\n", particle.Life);
-            this->shader.setVec2("offset", particle.Position);
+            this->shader.setVec3("offset", particle.Position);
             this->shader.setVec4("color", particle.Color);
             this->shader.setMat4("view", view);
             this->shader.setMat4("projection", projection);

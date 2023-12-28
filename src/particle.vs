@@ -17,5 +17,5 @@ void main()
     ParticleColor = color;
 
     // Combine the translation (offset) with the view-projection matrix
-    gl_Position = projection * view * vec4((vertex.xyz * scale) + offset, 1.0);
+    gl_Position = projection * view * vec4((vertex.xyz + offset) * scale, 1.0);
 }
