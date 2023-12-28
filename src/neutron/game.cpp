@@ -13,6 +13,7 @@
 #include <learnopengl/model.h>
 #include <iostream>
 #include <vector>
+#include <map>
 
 
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
@@ -22,7 +23,7 @@ void processInput(GLFWwindow* window);
 unsigned int loadTexture(const char* path);
 unsigned int loadCubemap(vector<std::string> faces);
 GLFWwindow* init();
-SpaceObject *Step(double time);
+Planet *Step(double time);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -38,7 +39,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-vector<Planet*> objectList;
+std::map<Planet*, Shader*> objectList;
 
 int main()
 {
@@ -53,19 +54,20 @@ int main()
 
     Shader sunShader("planet.vs", "planet.fs");
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
-    objectList.emplace_back(&sun);
+    objectList[&sun] = &sunShader;
 
     Shader planetShader("planet.vs", "planet.fs");
     Planet earth(100, 1, 0, -30, 0, 0.0004, 0, 0, planetShader, "resources/textures/planet.jpg");
-    objectList.emplace_back(&earth);
+    objectList[&earth] = &planetShader;
 
     Shader moonShader("planet.vs", "planet.fs");
     Planet moon(1, .2, -1.3, -30, 0, 0.0003, 0.00004, 0, moonShader, "resources/textures/moon.bmp");
-    objectList.emplace_back(&moon);
+    objectList[&moon] = &moonShader;
 
     // render loop
     // -----------
     float currentFrame;
+    Planet *planetToDestroy = nullptr;
     while (!glfwWindowShouldClose(window))
     {
         currentFrame = static_cast<float>(glfwGetTime());
@@ -73,7 +75,9 @@ int main()
         lastFrame = currentFrame;
 
         // doesnt delete on collision detect yet
-        Step(deltaTime);
+        planetToDestroy = Step(deltaTime);
+        if (planetToDestroy)
+            objectList[planetToDestroy] = nullptr;
 
         processInput(window);
 
@@ -84,11 +88,9 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        sun.draw(sunShader, view, projection);
-
-        earth.draw(planetShader, view, projection);
-
-        moon.draw(moonShader, view, projection);
+        for(auto object: objectList)
+            if(object.second)
+                object.first->draw(*object.second, view, projection);
 
         drawSkybox(skyboxShader, view, projection);
 
@@ -199,36 +201,36 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 
-SpaceObject *Step(double time)
+Planet *Step(double time)
 {
     SpaceObject* sun = SpaceObject::biggestMass;
     if (!sun)
         return nullptr;
     static const double gravitational = sun->mass * 6.674 / 1000000000000;
-    for (SpaceObject* object : objectList)
+    for (auto object : objectList)
     {
-        for (SpaceObject* otherObject : objectList)
+        for (auto otherObject : objectList)
         {
             // the sun wont be affected by the earth and the earth wont be by the moon
-            if (otherObject->mass <= object->mass)
+            if (otherObject.first->mass <= object.first->mass)
                 continue;
             // only consider the sun (or biggest mass) as it is the object everything gravitates around anyway
-            double pull = gravitational * object->mass / object->DistanceFrom(*otherObject) * time;
-            object->vX += pull * ((sun->x < object->x) ? -0.01 : 0.01);
-            object->vY += pull * ((sun->y < object->y) ? -0.01 : 0.01);
-            object->vZ += pull * ((sun->z < object->z) ? -0.01 : 0.01);
+            double pull = gravitational * object.first->mass / object.first->DistanceFrom(*otherObject.first) * time;
+            object.first->vX += pull * ((sun->x < object.first->x) ? -0.01 : 0.01);
+            object.first->vY += pull * ((sun->y < object.first->y) ? -0.01 : 0.01);
+            object.first->vZ += pull * ((sun->z < object.first->z) ? -0.01 : 0.01);
         }
     }
-    for (SpaceObject* object : objectList)
-        object->Tick(time);
+    for (auto object : objectList)
+        object.first->Tick(time);
     // we assume at most one object destruction per tick
-    SpaceObject* objectToRemove = nullptr;
-    for (SpaceObject* object : objectList)
+    Planet* objectToRemove = nullptr;
+    for (auto object : objectList)
     {
-        for (SpaceObject* otherObject : objectList)
-            if (otherObject != object && object->DistanceFrom(*otherObject) < (object->radius + otherObject->radius))
+        for (auto otherObject : objectList)
+            if (otherObject != object && object.first->DistanceFrom(*otherObject.first) < (object.first->radius + otherObject.first->radius))
             {
-                objectToRemove = object->mass > otherObject->mass ? otherObject : object;
+                objectToRemove = object.first->mass > otherObject.first->mass ? otherObject.first : object.first;
                 return objectToRemove;
             }
     }

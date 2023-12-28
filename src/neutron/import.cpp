@@ -177,6 +177,8 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     planetShader.setFloat("scale", radius);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(this->x, this->y, this->z));
+    if(this->vX + this->vY + this->vZ)
+        model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
     //model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
     planetShader.setMat4("model", model);
     glBindVertexArray(VAO);
