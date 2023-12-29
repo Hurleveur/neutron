@@ -57,11 +57,11 @@ int main()
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, Sun);
     objectList[&sun] = &sunShader;
 
-    Shader planetShader("planet.vs", "planet.fs");
+    Shader planetShader("sun.vs", "sun.fs");
     Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, planetShader, Earth);
     objectList[&earth] = &planetShader;
 
-    Shader moonShader("planet.vs", "planet.fs");
+    Shader moonShader("sun.vs", "sun.fs");
     Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, moonShader, Moon);
     objectList[&moon] = &moonShader;
 
@@ -91,7 +91,7 @@ int main()
 
         for(auto object: objectList)
             if(object.second)
-                object.first->draw(*object.second, sunShader, view, projection, camera, object.second == objectList.begin()->second);
+                object.first->draw(*object.second, view, projection, camera, object.second == objectList.begin()->second);
 
         drawSkybox(skyboxShader, view, projection);
 

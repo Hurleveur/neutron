@@ -184,7 +184,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
 }
 
 
-void Planet::draw(Shader &planetShader, Shader &lightningShader, glm::mat4& view, glm::mat4& projection, Camera camera, bool star)
+void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, Camera camera, bool star)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -200,7 +200,6 @@ void Planet::draw(Shader &planetShader, Shader &lightningShader, glm::mat4& view
     if(this->vX + this->vY + this->vZ)
         model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
     planetShader.setMat4("model", model);
-    lightningShader.setMat4("model", model);
 
     if (star)
     {
@@ -215,7 +214,7 @@ void Planet::draw(Shader &planetShader, Shader &lightningShader, glm::mat4& view
         // material properties
         planetShader.setInt("material.diffuse", 0);
         planetShader.setInt("material.specular", 1);
-        planetShader.setFloat("material.shininess", 50.0f);
+        planetShader.setFloat("material.shininess", 32.0f);
     }
 
     glBindVertexArray(VAO);

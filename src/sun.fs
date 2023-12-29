@@ -17,9 +17,9 @@ struct Light {
     float quadratic;
 };
 
-in vec3 FragPos;  
-in vec3 Normal;  
+in vec3 FragPos;
 in vec3 TexCoords;
+uniform sampler2D normalMap;
 uniform sampler2D mytexture;
   
 uniform vec3 viewPos;
@@ -28,11 +28,14 @@ uniform Material material;
 uniform Light light;
 
 void main() {
+    vec2 longitudeLatitude = vec2((atan(TexCoords.y, TexCoords.x) / 3.1415926 + 1.0) * 0.5,
+                                  (asin(TexCoords.z) / 3.1415926 + 0.5));
+    // Retrieve the normal from the normal map and transform it to the range [-1, 1]
+    vec3 norm = texture2D(normalMap,longitudeLatitude).rgb * 2.0 - 1.0;
+    norm = normalize(norm);
+
     // ambient
     vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb;
-  	
-    // diffuse 
-    vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(lightPos - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords).rgb;  
@@ -42,16 +45,8 @@ void main() {
     vec3 reflectDir = reflect(-lightDir, norm);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;  
-    
-    float distance = length(lightPos - FragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;   
-    vec3 result = ambient + diffuse + specular;
 
-    vec2 longitudeLatitude = vec2((atan(TexCoords.y, TexCoords.x) / 3.1415926 + 1.0) * 0.5,
-                                  (asin(TexCoords.z) / 3.1415926 + 0.5));
+    vec3 result = ambient + diffuse + specular;
 
     FragColor = texture2D(mytexture, longitudeLatitude) + vec4(result, 1.0);
 }
