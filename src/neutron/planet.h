@@ -12,12 +12,12 @@ const float PI = acos(-1.0f);
 
 // Function to generate sphere geometry
 void generateSphere(float radius, int sectorCount, int stackCount,
-                    std::vector<float>& vertices, std::vector<float>& normals, std::vector<float>& texCoords, std::vector<unsigned int>& indices) {
+                    vector<float>& vertices, vector<float>& normals, vector<float>& texCoords, vector<unsigned int>& indices) {
     // clear memory of prev arrays
-    std::vector<float>().swap(vertices);
-    std::vector<float>().swap(normals);
-    std::vector<float>().swap(texCoords);
-    std::vector<unsigned int>().swap(indices);
+    vector<float>().swap(vertices);
+    vector<float>().swap(normals);
+    vector<float>().swap(texCoords);
+    vector<unsigned int>().swap(indices);
 
     float x, y, z, xy;                              // vertex position
     float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -115,4 +115,32 @@ GLuint generateMipmappedTexture(const char* imagePath) {
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return textureID;
+}
+
+GLuint loadNormalMap(const char* imagePath) {
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(imagePath, &width, &height, &nrChannels, 4);
+
+    if (!data) {
+        cerr << "Failed to load normal map: " << imagePath << endl;
+        return 0;
+    }
+
+    GLuint normalMapID;
+    glGenTextures(1, &normalMapID);
+    glBindTexture(GL_TEXTURE_2D, normalMapID);
+
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Generate normal map texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    stbi_image_free(data);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return normalMapID;
 }

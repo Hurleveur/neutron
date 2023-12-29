@@ -124,21 +124,43 @@ double SpaceObject::DistanceFrom(const SpaceObject& object) const
     );
 }
 
-Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, const char *image) :
+Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, int image) :
     SpaceObject(mass, radius, posX, posY, posZ, speedX, speedY, speedZ) {
     this->makePlanet(planetShader, image);
 };
 
-void Planet::makePlanet(Shader& planetShader, const char *image)
+void Planet::makePlanet(Shader& planetShader, int image)
 {
     int sectorCount = 36;
     int stackCount = 18;
 
     generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
-    planetTextureID = generateMipmappedTexture(FileSystem::getPath(image).c_str());
+    //planetTextureID = generateMipmappedTexture(FileSystem::getPath(image).c_str());
+    const char * texture;
+    switch (image) {
+        case 0:
+            texture = "resources/textures/th.jpeg";
+            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/th.jpeg").c_str());
+            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/th.jpeg").c_str());
+            break;
+        case 1:
+            texture = "resources/textures/planet.jpg";
+            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
+            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
+            break;
+        case 2:
+            texture = "resources/textures/moon.bmp";
+            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/moon.bmp").c_str());
+            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/moon.bmp").c_str());
+            break;
+        default:
+            texture = "resources/textures/planet.jpg";
+            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
+            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
+            break;
+    }
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-
     glGenBuffers(4, VBO);
 
     // Bind and set vertex data (position, normal, and texture coordinates)
@@ -161,11 +183,12 @@ void Planet::makePlanet(Shader& planetShader, const char *image)
     glBindVertexArray(0);
 
     planetShader.use();
-    planetShader.setInt(image, 0);
+    planetShader.setInt(texture, 0);
+    planetShader.setInt("normalMap", 1);
 }
 
 
-void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
+void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, Camera camera)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -179,12 +202,15 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     model = glm::translate(model, glm::vec3(this->x, this->y, this->z));
     if(this->vX + this->vY + this->vZ)
         model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
-    //model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
     planetShader.setMat4("model", model);
-    glBindVertexArray(VAO);
+    planetShader.setVec3("viewPos", camera.Position);
+    planetShader.setVec3("lightPos", glm::vec3(0.0f, 0.0f, 0.0f));
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, normalMapID);
     // Render the sphere
+    glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
     glBindVertexArray(0);
 }

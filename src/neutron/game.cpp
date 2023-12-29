@@ -46,7 +46,7 @@ int main()
     GLFWwindow* window = init();
     if (!window)
         return -1;
-    camera.MovementSpeed *= 2;
+    camera.MovementSpeed *= 6;
 
     // build and compile shaders
     // -------------------------
@@ -54,15 +54,15 @@ int main()
     makeSkybox(skyboxShader);
 
     Shader sunShader("planet.vs", "planet.fs");
-    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
+    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, 0);
     objectList[&sun] = &sunShader;
 
     Shader planetShader("planet.vs", "planet.fs");
-    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, planetShader, "resources/textures/planet.jpg");
+    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, planetShader, 1);
     objectList[&earth] = &planetShader;
 
     Shader moonShader("planet.vs", "planet.fs");
-    Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, moonShader, "resources/textures/moon.bmp");
+    Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, moonShader, 2);
     objectList[&moon] = &moonShader;
 
     // render loop
@@ -91,7 +91,7 @@ int main()
 
         for(auto object: objectList)
             if(object.second)
-                object.first->draw(*object.second, view, projection);
+                object.first->draw(*object.second, view, projection, camera);
 
         drawSkybox(skyboxShader, view, projection);
 
