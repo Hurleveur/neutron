@@ -165,7 +165,7 @@ void Planet::makePlanet(Shader& planetShader, const char *image)
 }
 
 
-void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, bool star)
+void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, glm::vec3& camera, bool star)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -187,17 +187,18 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, 
     {
         // light properties
         planetShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        planetShader.setVec3("light.diffuse", 0.1f, 0.1f, 0.1f);
+        planetShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
         planetShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
         planetShader.setFloat("light.constant", 1.0f);
         planetShader.setFloat("light.linear", 0.007f);
         planetShader.setFloat("light.quadratic", 0.0002f);
         planetShader.setVec3("light.position", glm::vec3(this->x, this->y, this->z));
 
+        planetShader.setVec3("viewPos", camera);
         // material properties
         planetShader.setInt("material.diffuse", 0);
         planetShader.setInt("material.specular", 1);
-        planetShader.setFloat("material.shininess", 32.0f);
+        planetShader.setFloat("material.shininess", 50.0f);
     }
 
     glBindVertexArray(VAO);

@@ -91,9 +91,7 @@ int main()
 
         for(auto object: objectList)
             if(object.second)
-                object.first->draw(*object.second, view, projection, object.second == objectList.begin()->second);
-
-        sunShader.setVec3("viewPos", camera.Position);
+                object.first->draw(*object.second, view, projection, camera.Position, object.second == objectList.begin()->second);
 
         drawSkybox(skyboxShader, view, projection);
 
