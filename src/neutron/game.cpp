@@ -54,15 +54,15 @@ int main()
     makeSkybox(skyboxShader);
 
     Shader sunShader("planet.vs", "planet.fs");
-    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, 0);
+    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, Sun);
     objectList[&sun] = &sunShader;
 
     Shader planetShader("planet.vs", "planet.fs");
-    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, planetShader, 1);
+    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, planetShader, Earth);
     objectList[&earth] = &planetShader;
 
     Shader moonShader("planet.vs", "planet.fs");
-    Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, moonShader, 2);
+    Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, moonShader, Moon);
     objectList[&moon] = &moonShader;
 
     // render loop

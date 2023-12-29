@@ -13,6 +13,12 @@ void makeSkybox(Shader &skyboxShader);
 
 void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection);
 
+enum Planets {
+    Sun,
+    Earth,
+    Moon,
+};
+
 
 class SpaceObject {
 public:

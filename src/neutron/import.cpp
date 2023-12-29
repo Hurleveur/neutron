@@ -138,17 +138,17 @@ void Planet::makePlanet(Shader& planetShader, int image)
     //planetTextureID = generateMipmappedTexture(FileSystem::getPath(image).c_str());
     const char * texture;
     switch (image) {
-        case 0:
+        case Sun:
             texture = "resources/textures/th.jpeg";
             planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/th.jpeg").c_str());
             normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/th.jpeg").c_str());
             break;
-        case 1:
+        case Earth:
             texture = "resources/textures/planet.jpg";
             planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
             normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
             break;
-        case 2:
+        case Moon:
             texture = "resources/textures/moon.bmp";
             planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/moon.bmp").c_str());
             normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/moon.bmp").c_str());
