@@ -139,20 +139,16 @@ void Planet::makePlanet(Shader& planetShader, int image)
     const char * texture;
     switch (image) {
         case Sun:
-            texture = "resources/textures/th.jpeg";
-            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/th.jpeg").c_str());
-            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/th.jpeg").c_str());
-            break;
-        case Earth:
-            texture = "resources/textures/planet.jpg";
-            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
-            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
+            texture = "resources/textures/sun.jpeg";
+            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/sun.jpeg").c_str());
+            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/sun.jpeg").c_str());
             break;
         case Moon:
             texture = "resources/textures/moon.bmp";
             planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/moon.bmp").c_str());
             normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/moon.bmp").c_str());
             break;
+        case Earth:
         default:
             texture = "resources/textures/planet.jpg";
             planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
@@ -188,7 +184,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
 }
 
 
-void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, Camera camera, bool star)
+void Planet::draw(Shader &planetShader, Shader &lightningShader, glm::mat4& view, glm::mat4& projection, Camera camera, bool star)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -204,6 +200,7 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, 
     if(this->vX + this->vY + this->vZ)
         model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
     planetShader.setMat4("model", model);
+    lightningShader.setMat4("model", model);
 
     if (star)
     {
@@ -214,7 +211,6 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, 
         planetShader.setFloat("light.constant", 1.0f);
         planetShader.setFloat("light.linear", 0.007f);
         planetShader.setFloat("light.quadratic", 0.0002f);
-        planetShader.setVec3("light.position", glm::vec3(0.0f, 0.0f, 0.0f));
 
         // material properties
         planetShader.setInt("material.diffuse", 0);

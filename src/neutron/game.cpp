@@ -53,7 +53,7 @@ int main()
     Shader skyboxShader("skybox.vs", "skybox.fs");
     makeSkybox(skyboxShader);
 
-    Shader sunShader("planet.vs", "planet.fs");
+    Shader sunShader("sun.vs", "sun.fs");
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, Sun);
     objectList[&sun] = &sunShader;
 
@@ -91,7 +91,7 @@ int main()
 
         for(auto object: objectList)
             if(object.second)
-                object.first->draw(*object.second, view, projection, camera, object.second == objectList.begin()->second);
+                object.first->draw(*object.second, sunShader, view, projection, camera, object.second == objectList.begin()->second);
 
         drawSkybox(skyboxShader, view, projection);
 
