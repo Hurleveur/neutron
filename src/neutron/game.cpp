@@ -53,7 +53,7 @@ int main()
     Shader skyboxShader("skybox.vs", "skybox.fs");
     makeSkybox(skyboxShader);
 
-    Shader sunShader("planet.vs", "planet.fs");
+    Shader sunShader("sun.vs", "sun.fs");
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, "resources/textures/sun.jpeg");
     objectList[&sun] = &sunShader;
 
@@ -91,7 +91,9 @@ int main()
 
         for(auto object: objectList)
             if(object.second)
-                object.first->draw(*object.second, view, projection);
+                object.first->draw(*object.second, view, projection, object.second == objectList.begin()->second);
+
+        sunShader.setVec3("viewPos", camera.Position);
 
         drawSkybox(skyboxShader, view, projection);
 

@@ -39,7 +39,7 @@ class Planet : public SpaceObject {
 public:
     Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader &planetShader, const char *image);
     void makePlanet(Shader& planetShader, const char *image);
-    void draw(Shader& planetShader, glm::mat4& view, glm::mat4& projection);
+    void draw(Shader& planetShader, glm::mat4& view, glm::mat4& projection, bool star = false);
 
 public:
 	// Generate mipmapped texture

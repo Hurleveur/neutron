@@ -165,7 +165,7 @@ void Planet::makePlanet(Shader& planetShader, const char *image)
 }
 
 
-void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
+void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, bool star)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -175,12 +175,31 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection)
     planetShader.setMat4("view", view);
     planetShader.setMat4("projection", projection);
     planetShader.setFloat("scale", radius);
+
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(this->x, this->y, this->z));
     if(this->vX + this->vY + this->vZ)
         model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
     //model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
     planetShader.setMat4("model", model);
+
+    if (star)
+    {
+        // light properties
+        planetShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+        planetShader.setVec3("light.diffuse", 0.1f, 0.1f, 0.1f);
+        planetShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        planetShader.setFloat("light.constant", 1.0f);
+        planetShader.setFloat("light.linear", 0.007f);
+        planetShader.setFloat("light.quadratic", 0.0002f);
+        planetShader.setVec3("light.position", glm::vec3(this->x, this->y, this->z));
+
+        // material properties
+        planetShader.setInt("material.diffuse", 0);
+        planetShader.setInt("material.specular", 1);
+        planetShader.setFloat("material.shininess", 32.0f);
+    }
+
     glBindVertexArray(VAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
