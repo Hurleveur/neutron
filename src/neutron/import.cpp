@@ -200,7 +200,9 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, 
     if(this->vX + this->vY + this->vZ)
         model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
     planetShader.setMat4("model", model);
-
+    // material properties
+    planetShader.setInt("material.diffuse", 1);
+    planetShader.setInt("material.specular", 0);
     if (star)
     {
         // light properties

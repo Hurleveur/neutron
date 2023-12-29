@@ -75,9 +75,9 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // doesnt delete on collision detect yet
         planetToDestroy = Step(deltaTime);
         if (planetToDestroy)
+            // TODO: make it go boom
             objectList[planetToDestroy] = nullptr;
 
         processInput(window);
@@ -229,8 +229,6 @@ Planet *Step(double time)
         object.first->Tick(time);
     // we assume at most one object destruction per tick
     Planet* objectToRemove = nullptr;
-    // TODO REMOVE WHEN ORBIT FIXED BUT RN leave my moon alone!
-    return objectToRemove;
     for (auto object : objectList)
     {
         for (auto otherObject : objectList)
