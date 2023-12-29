@@ -54,7 +54,7 @@ int main()
     makeSkybox(skyboxShader);
 
     Shader sunShader("planet.vs", "planet.fs");
-    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, "resources/textures/th.jpeg");
+    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, "resources/textures/sun.jpeg");
     objectList[&sun] = &sunShader;
 
     Shader planetShader("planet.vs", "planet.fs");
@@ -220,9 +220,9 @@ Planet *Step(double time)
             if (object.first->mass * otherObject.first->mass == 100)
                 distance /= 100;
             double pull = otherObject.first->mass * gravitational / (distance * distance) * time;
-            object.first->vX += pull * ((otherObject.first->x < object.first->x) ? -1 : 1);
-            object.first->vY += pull * ((otherObject.first->y < object.first->y) ? -1 : 1);
-            object.first->vZ += pull * ((otherObject.first->z < object.first->z) ? -1 : 1);
+            object.first->vX += pull * ((otherObject.first->x > object.first->x) ? 1 : -1);
+            object.first->vY += pull * ((otherObject.first->y > object.first->y) ? 1 : -1);
+            object.first->vZ += pull * ((otherObject.first->z > object.first->z) ? 1 : -1);
         }
     }
     for (auto object : objectList)
