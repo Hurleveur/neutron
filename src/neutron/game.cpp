@@ -103,20 +103,23 @@ int main()
             shader.second->setVec3("light.position", 0.f, 0.f, 0.f);
             shader.second->setVec3("viewPos", camera.Position);
             // light properties
-            shader.second->setVec3("light.ambient", .2f, .2f, .2f);
-            shader.second->setVec3("light.diffuse", .5f, .5f, .5f);
-            shader.second->setVec3("light.specular", 1.f, 1.f, 1.f);
+            shader.second->setVec3("light.ambient", 1.f, 1.f, 1.f);
+            shader.second->setVec3("light.diffuse", .7f, .7f, .7f);
+            shader.second->setVec3("light.specular", .5f, .5f, .5f);
 
             // material properties
-            shader.second->setFloat("material.shininess", 15.0f);
+            shader.second->setFloat("material.shininess", 2.f);
 
             shader.second->setMat4("view", view);
             shader.second->setMat4("projection", projection);
         }
 
         for (auto object : objectList)
+        {
             if (object.second)
                 object.first->draw(*object.second, view, projection, camera);
+            sunShader.setVec3("light.ambient", .2f, .2f, .2f);
+        }
 
         drawSkybox(skyboxShader, view, projection);
 
