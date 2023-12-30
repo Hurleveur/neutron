@@ -17,13 +17,13 @@ void main() {
     vec2 longitudeLatitude = vec2((atan(TexCoords.y, TexCoords.x) / 3.1415926 + 1.0) * 0.5,
                                   (asin(TexCoords.z) / 3.1415926 + 0.5));
     // Retrieve the normal from the normal map and transform it to the range [-1, 1]
-    vec3 normal = texture2D(normalMap,longitudeLatitude).rgb * 2.0 - 1.0;
+    vec3 normal = texture2D(normalMap,longitudeLatitude).xyz * 2.0 - 1.0;
     normal = normalize(normal);
 
     // get diffuse color
     vec3 color = texture(mytexture, longitudeLatitude).rgb;
     // ambient
-    vec3 ambient = 0.1 * color;
+    vec3 ambient = color;
     // diffuse
     vec3 lightDir = normalize(TangentLightPos - TangentFragPos);
     float diff = max(dot(lightDir, normal), 0.0);
