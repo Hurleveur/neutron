@@ -94,7 +94,6 @@ void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
     glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
     glDepthFunc(GL_LESS); // set depth function back to default
 }
 
@@ -131,11 +130,6 @@ Planet::Planet(int mass, float radius, double posX, double posY, double posZ, do
 
 void Planet::makePlanet(Shader& planetShader, int image)
 {
-    int sectorCount = 36;
-    int stackCount = 18;
-
-    generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
-    //planetTextureID = generateMipmappedTexture(FileSystem::getPath(image).c_str());
     const char * texture;
     switch (image) {
         case Sun:
@@ -155,6 +149,9 @@ void Planet::makePlanet(Shader& planetShader, int image)
             normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
             break;
     }
+    int sectorCount = 36;
+    int stackCount = 18;
+    generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(4, VBO);
@@ -175,24 +172,20 @@ void Planet::makePlanet(Shader& planetShader, int image)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
     glEnableVertexAttribArray(2);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
     planetShader.use();
     planetShader.setInt(texture, 0);
     planetShader.setInt("normalMap", 1);
 }
 
 
-void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, Camera camera, bool star)
+void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, Camera camera)
 {
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, planetTextureID);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, normalMapID);
+    glBindVertexArray(VAO);
     // planet
-    planetShader.use();
-    planetShader.setMat4("view", view);
-    planetShader.setMat4("projection", projection);
     planetShader.setFloat("scale", radius);
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -200,34 +193,6 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, 
     if(this->vX + this->vY + this->vZ)
         model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
     planetShader.setMat4("model", model);
-    // material properties
-    planetShader.setInt("material.diffuse", 1);
-    planetShader.setInt("material.specular", 0);
-    if (star)
-    {
-        // light properties
-        planetShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        planetShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        planetShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-        planetShader.setFloat("light.constant", 1.0f);
-        planetShader.setFloat("light.linear", 0.007f);
-        planetShader.setFloat("light.quadratic", 0.0002f);
-
-        // material properties
-        planetShader.setInt("material.diffuse", 0);
-        planetShader.setInt("material.specular", 1);
-        planetShader.setFloat("material.shininess", 32.0f);
-    }
-
-    glBindVertexArray(VAO);
-    planetShader.setVec3("viewPos", camera.Position);
-    planetShader.setVec3("lightPos", glm::vec3(0.0f, 0.0f, 0.0f));
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, planetTextureID);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, normalMapID);
     // Render the sphere
-    glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
-    glBindVertexArray(0);
 }

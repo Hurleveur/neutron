@@ -57,30 +57,38 @@ int main()
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, sunShader, Sun);
     objectList[&sun] = &sunShader;
 
-    Shader planetShader("sun.vs", "sun.fs");
-    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, planetShader, Earth);
-    objectList[&earth] = &planetShader;
+    Shader earthShader("sun.vs", "sun.fs");
+    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, earthShader, Earth);
+    objectList[&earth] = &earthShader;
 
     Shader moonShader("sun.vs", "sun.fs");
     Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, moonShader, Moon);
     objectList[&moon] = &moonShader;
-
     // render loop
     // -----------
     float currentFrame;
     Planet *planetToDestroy = nullptr;
+    for (auto shader : objectList)
+    {
+        shader.second->use();
+        shader.second->setInt("material.diffuse", 0);
+        shader.second->setInt("material.specular", 1);
+    }
     while (!glfwWindowShouldClose(window))
     {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+
+        processInput(window);
+
         planetToDestroy = Step(deltaTime);
+        /*
         if (planetToDestroy)
             // TODO: make it go boom
             objectList[planetToDestroy] = nullptr;
-
-        processInput(window);
+        */
 
         // render
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -89,9 +97,26 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-        for(auto object: objectList)
-            if(object.second)
-                object.first->draw(*object.second, view, projection, camera, object.second == objectList.begin()->second);
+        for (auto shader : objectList)
+        {
+            shader.second->use();
+            shader.second->setVec3("light.position", 0.f, 0.f, 0.f);
+            shader.second->setVec3("viewPos", camera.Position);
+            // light properties
+            shader.second->setVec3("light.ambient", .2f, .2f, .2f);
+            shader.second->setVec3("light.diffuse", .5f, .5f, .5f);
+            shader.second->setVec3("light.specular", 1.f, 1.f, 1.f);
+
+            // material properties
+            shader.second->setFloat("material.shininess", 15.0f);
+
+            shader.second->setMat4("view", view);
+            shader.second->setMat4("projection", projection);
+        }
+
+        for (auto object : objectList)
+            if (object.second)
+                object.first->draw(*object.second, view, projection, camera);
 
         drawSkybox(skyboxShader, view, projection);
 
