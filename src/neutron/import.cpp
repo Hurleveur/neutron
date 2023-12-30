@@ -9,6 +9,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+using namespace glm;
+
 constexpr float skyboxVertices[] = {
     // positions
     -1.0f,  1.0f, -1.0f,
@@ -82,12 +84,12 @@ void makeSkybox(Shader &skyboxShader)
     skyboxShader.setInt("skybox", 0);
 }
 
-void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection)
+void drawSkybox(Shader &skyboxShader, mat4 &view, mat4 &projection)
 {
     // draw skybox as last
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     skyboxShader.use();
-    skyboxShader.setMat4("view", glm::mat3(view));
+    skyboxShader.setMat4("view", mat3(view));
     skyboxShader.setMat4("projection", projection);
     // skybox cube
     glBindVertexArray(skyboxVAO);
@@ -143,6 +145,9 @@ void Planet::makePlanet(Shader& planetShader, int image)
             normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/moon.bmp").c_str());
             break;
         case Earth:
+            texture = "resources/textures/planet.jpg";
+            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
+            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
         default:
             texture = "resources/textures/planet.jpg";
             planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
@@ -178,7 +183,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
 }
 
 
-void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, Camera camera)
+void Planet::draw(Shader &planetShader, mat4& view, mat4& projection, Camera camera)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
@@ -188,10 +193,10 @@ void Planet::draw(Shader &planetShader, glm::mat4& view, glm::mat4& projection, 
     // planet
     planetShader.setFloat("scale", radius);
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(this->x, this->y, this->z));
+    mat4 model = mat4(1.0f);
+    model = translate(model, vec3(this->x, this->y, this->z));
     if(this->vX + this->vY + this->vZ)
-        model = glm::rotate(model, 360.f, glm::vec3(this->vX, this->vY, this->vZ));
+        model = rotate(model, 360.f, vec3(this->vX, this->vY, this->vZ));
     planetShader.setMat4("model", model);
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
