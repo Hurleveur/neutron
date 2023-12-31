@@ -51,7 +51,7 @@ public:
 public:
 	// Generate mipmapped texture
 	// create vao and vbo
-	GLuint VAO, VBO[4], planetTextureID, normalMapID;
+	GLuint VAO, VBO[4], planetTextureID, normalMapID, specMapID;
 	std::vector<float> vertices, normals, texCoords;
 	std::vector<unsigned int> indices;
 };

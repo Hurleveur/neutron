@@ -72,7 +72,7 @@ int main()
     {
         shader.second->use();
         shader.second->setInt("material.diffuse", 0);
-        shader.second->setInt("material.specular", 1);
+        shader.second->setInt("material.specular", 2);
     }
     while (!glfwWindowShouldClose(window))
     {

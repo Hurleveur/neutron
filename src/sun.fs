@@ -29,8 +29,6 @@ uniform Material material;
 uniform Light light;
 
 void main() {
-    /* vec2 longitudeLatitude = vec2((atan(TexCoords.y, TexCoords.x) / 3.1415926 + 1.0) * 0.5,
-                                  (asin(TexCoords.z) / 3.1415926 + 0.5)); */
     vec3 normal = texture2D(normalMap,TexCoords2).xyz * 2.0 - 1.0;
     vec3 norm = normalize(normal);
     // ambient
@@ -38,20 +36,19 @@ void main() {
 
     // diffuse
     vec3 norm2 = normalize(Normal);
-    vec3 lightDir = normalize(light.position - FragPos);
+    vec3 lightDir = normalize(light.position - FragPos);// * normalize(TangentLightPos - TangentFragPos);
     //vec3 lightDir = normalize(TangentLightPos - TangentFragPos);
-    float diff = max(dot(norm, lightDir), 0.0);
+    float diff = max(dot(norm2, lightDir), 0.0);
     vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords2).rgb;
 
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);
     //vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
-    vec3 reflectDir = reflect(-lightDir, norm2);
-    //vec3 reflectDir = reflect(-lightDir, norm);
+    vec3 reflectDir = reflect(-lightDir, norm);
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    //float spec2 = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
+    //float spec2 = pow(max(dot(norm, halfwayDir), 0.0), material.shininess);
     vec3 specular = light.specular * spec * texture(material.specular, TexCoords2).rgb;
 
-    FragColor = vec4((ambient + diffuse + specular), 1.0);
+    FragColor = vec4((ambient + diffuse + specular*10*diffuse), 1.0);
 }

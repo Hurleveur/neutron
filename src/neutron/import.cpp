@@ -154,6 +154,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
             normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
             break;
     }
+    specMapID = loadNormalMap(FileSystem::getPath("resources/textures/SpecularMap.png").c_str());
     int sectorCount = 36;
     int stackCount = 18;
     generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
@@ -189,6 +190,8 @@ void Planet::draw(Shader &planetShader, mat4& view, mat4& projection, Camera cam
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, normalMapID);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, specMapID);
     glBindVertexArray(VAO);
     // planet
     planetShader.setFloat("scale", radius);
