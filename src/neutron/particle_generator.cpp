@@ -1,5 +1,5 @@
 /*******************************************************************
-** This code is part of Breakout.
+** This code has been adapted from 2D to 3D and then modified from the LearnOpenGL tutorials's Breakout game.
 **
 ** Breakout is free software: you can redistribute it and/or modify
 ** it under the terms of the CC BY 4.0 license as published by

@@ -10,7 +10,7 @@ using namespace std;
 
 const float PI = acos(-1.0f);
 
-// Function to generate sphere geometry
+// Function to generate sphere geometry comes from https://www.songho.ca/opengl/gl_sphere.html
 void generateSphere(float radius, int sectorCount, int stackCount,
                     vector<float>& vertices, vector<float>& normals, vector<float>& texCoords, vector<unsigned int>& indices) {
     // clear memory of prev arrays
@@ -67,10 +67,7 @@ void generateSphere(float radius, int sectorCount, int stackCount,
         k1 = i * (sectorCount + 1);     // beginning of current stack
         k2 = k1 + sectorCount + 1;      // beginning of next stack
 
-        for(int j = 0; j < sectorCount; ++j, ++k1, ++k2)
-        {
-            // 2 triangles per sector excluding first and last stacks
-            // k1 => k2 => k1+1
+        for(int j = 0; j < sectorCount; ++j, ++k1, ++k2) {
             if(i != 0)
             {
                 indices.push_back(k1);
@@ -89,7 +86,6 @@ void generateSphere(float radius, int sectorCount, int stackCount,
     }
 }
 
-// Function to generate mipmapped texture
 GLuint generateMipmappedTexture(const char* imagePath) {
     int width, height, nrChannels;
     unsigned char* data = stbi_load(imagePath, &width, &height, &nrChannels, 4);
