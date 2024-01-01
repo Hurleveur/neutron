@@ -17,6 +17,8 @@ enum Planets {
     Sun,
     Earth,
     Moon,
+	Mars,
+	Mercury,
 };
 
 

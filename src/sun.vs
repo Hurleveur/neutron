@@ -7,8 +7,7 @@ layout (location = 4) in vec3 aBitangent;
 
 out vec3 FragPos;
 out vec3 Normal;
-out vec3 TexCoords;
-out vec2 TexCoords2;
+out vec2 TexCoords;
 out vec3 TangentLightPos;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
@@ -38,6 +37,5 @@ void main()
     TangentFragPos  = TBN * FragPos;
 
     gl_Position = projection * view * vec4(FragPos, 1.0);
-    TexCoords = aPos;
-    TexCoords2 = aTexCoords;
+    TexCoords = aTexCoords;
 }

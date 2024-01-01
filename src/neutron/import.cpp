@@ -147,6 +147,14 @@ void Planet::makePlanet(Shader& planetShader, int image)
             textureFile = "resources/textures/planets/moon/";
             name = "moon.bmp";
             break;
+        case Mercury:
+            textureFile = "resources/textures/planets/mercury/";
+            name = "mercury.png";
+            break;
+        case Mars:
+            textureFile = "resources/textures/planets/mars/";
+            name = "mars.png";
+            break;
         case Earth:
         default:
             textureFile = "resources/textures/planets/earth/";

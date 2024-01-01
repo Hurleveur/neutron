@@ -39,6 +39,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+bool stop = false;
+
 std::vector<Planet*> objectList;
 
 int main()
@@ -60,6 +62,10 @@ int main()
     objectList.emplace_back(&earth);
     Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Moon);
     objectList.emplace_back(&moon);
+    Planet mars(100, .8, 1.5, -80, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Mars);
+    objectList.emplace_back(&mars);
+    Planet mercury(100, .5, 1.5, -30, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Mercury);
+    objectList.emplace_back(&mercury);
     // render loop
     // -----------
     float currentFrame;
@@ -177,6 +183,9 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        stop = !stop;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -221,7 +230,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 Planet *Step(double time)
 {
     SpaceObject* sun = SpaceObject::biggestMass;
-    if (!sun)
+    if (!sun || stop)
         return nullptr;
     static const double gravitational = 6.674 / 100000000000;
     for (auto object : objectList)
