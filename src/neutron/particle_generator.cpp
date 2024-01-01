@@ -11,6 +11,7 @@
 #include <learnopengl/shader_m.h>
 
 using namespace glm;
+using namespace std;
 
 ParticleGenerator::ParticleGenerator(Shader shader, GLuint texture, unsigned int amount)
     : shader(shader), texture(texture), amount(amount)
@@ -22,20 +23,17 @@ void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offs
 {
     // printf("ok\n");
     // add new particles
-    for (unsigned int i = 0; i < newParticles; ++i)
-    {
+    for (unsigned int i = 0; i < newParticles; ++i) {
         int unusedParticle = this->firstUnusedParticle();
         this->respawnParticle(this->particles[unusedParticle], offset);
     }
-    // update all particles
-    for (unsigned int i = 0; i < this->amount; ++i)
-    {
+    for (unsigned int i = 0; i < this->amount; ++i) {
         Particle &p = this->particles[i];
-        p.Life -= delta; // reduce life
-        if (p.Life > 0.0f)  {	// particle is alive, thus update
-            // printf("Particle: %f\n", p.Life);
+        p.Life -= delta;
+        if (p.Life > 0.0f)  {	                    // move particle while alive
             p.Position -= p.Velocity * delta;
             p.Color.a -= delta * 2.5f;
+            if (p.Life < 0.1f) { p.Scale = 0.01f; } // reduce size before despawn
         }
     }
 }
@@ -43,18 +41,16 @@ void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offs
 // render all particles
 void ParticleGenerator::Draw(mat4 view, mat4 projection)
 {
-    //printf("ok\n");
-    // use additive blending to give it a 'glow' effect
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     this->shader.use();
     for (Particle particle : this->particles)
     {
         if (particle.Life > 0.0f) {
             //printf("Particle: %f\n", particle.Life);
             this->shader.setVec3("offset", particle.Position);
-            this->shader.setVec4("color", particle.Color);
             this->shader.setMat4("view", view);
             this->shader.setMat4("projection", projection);
+            this->shader.setFloat("scale", particle.Scale);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, this->texture);
             glBindVertexArray(this->VAO);
@@ -62,8 +58,6 @@ void ParticleGenerator::Draw(mat4 view, mat4 projection)
             glBindVertexArray(0);
         }
     }
-    // don't forget to reset to default blending mode
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void ParticleGenerator::init()
@@ -120,10 +114,11 @@ unsigned int ParticleGenerator::firstUnusedParticle()
 
 void ParticleGenerator::respawnParticle(Particle &particle, glm::vec3 offset)
 {
-    float random = ((rand() % 100) - 50) / 10.0f;
+    float random = (rand() % 100)/100.0f;
     float rColor = 0.5f + ((rand() % 100) / 100.0f);
-    particle.Position = glm::vec3(random + offset.x, offset.y, offset.z); // Adjust 3D position
+    particle.Position = glm::vec3((rand() % 100)/100.0f + offset.x, (rand() % 100)/100.0f + offset.y, (rand() % 100)/100.0f + offset.z);
     particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
     particle.Life = 1.0f;
-    particle.Velocity = glm::vec3((rand() % 200) - 100, 0.1f, (rand() % 200) - 100) / 10.0f; // Adjust 3D velocity
+    particle.Scale = 0.02f;
+    particle.Velocity = glm::vec3((rand() % 20) - 10, (rand() % 20) - 10, (rand() % 20) - 10);
 }

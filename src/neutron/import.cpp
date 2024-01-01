@@ -170,7 +170,7 @@ void drawPlanet(Shader &planetShader, mat4& view, mat4& projection)
 void makeParticles(Shader &particleShader) {
     particleShader.use();
     particleShader.setInt("particle", 0);
-    particleTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/window.png").c_str());
+    particleTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/particles.png").c_str());
     Particles = new ParticleGenerator(particleShader, particleTextureID, 500);
 }
 
