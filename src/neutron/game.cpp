@@ -61,7 +61,7 @@ int main()
     Shader particleShader("particle.vs", "particle.fs");
     makeParticles(particleShader);
 
-    Shader shader("sun.vs", "sun.fs");
+    Shader shader("shader.vs", "shader.fs");
 
     // make all planets, starting with the sun
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, shader, Sun);

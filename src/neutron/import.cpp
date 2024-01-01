@@ -187,7 +187,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
     planetShader.use();
     //planetShader.setInt(texture, 0);
     planetShader.setInt("material.diffuse", 0);
-    planetShader.setInt("material.normal", 1);
+    planetShader.setInt("normalMap", 1);
     planetShader.setInt("material.specular", 2);
 }
 
