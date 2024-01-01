@@ -7,10 +7,10 @@ in vec3 TangentViewPos;
 in vec3 TangentFragPos;
 
 out vec4 FragColor;
-uniform sampler2D normalMap;
 
 struct Material {
     sampler2D diffuse;
+    sampler2D normalMap;
     sampler2D specular;
     float shininess;
 };
@@ -29,7 +29,7 @@ uniform Material material;
 uniform Light light;
 
 void main() {
-    vec3 normal = texture2D(normalMap,TexCoords2).xyz * 2.0 - 1.0;
+    vec3 normal = texture2D(material.normalMap,TexCoords2).xyz * 2.0 - 1.0;
     vec3 norm = normalize(normal);
     // ambient
     vec3 ambient = light.ambient * texture(material.diffuse, TexCoords2).rgb;

@@ -11,6 +11,9 @@
 
 using namespace glm;
 
+int sectorCount = 36;
+int stackCount = 18;
+
 constexpr float skyboxVertices[] = {
     // positions
     -1.0f,  1.0f, -1.0f,
@@ -132,31 +135,32 @@ Planet::Planet(int mass, float radius, double posX, double posY, double posZ, do
 
 void Planet::makePlanet(Shader& planetShader, int image)
 {
-    const char * texture;
+    std::string textureFile;
+    std::string name;
+    std::string extension;
     switch (image) {
         case Sun:
-            texture = "resources/textures/sun.jpeg";
-            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/sun.jpeg").c_str());
-            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/sun.jpeg").c_str());
+            textureFile = "resources/textures/planets/sun/";
+            name = "sun";
+            extension = ".jpeg";
             break;
         case Moon:
-            texture = "resources/textures/moon.bmp";
-            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/moon.bmp").c_str());
-            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/moon.bmp").c_str());
+            textureFile = "resources/textures/planets/moon/";
+            name = "moon";
+            extension = ".bmp";
             break;
         case Earth:
-            texture = "resources/textures/planet.jpg";
-            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
-            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
         default:
-            texture = "resources/textures/planet.jpg";
-            planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
-            normalMapID = loadNormalMap(FileSystem::getPath("resources/textures/EarthMap.png").c_str());
+            textureFile = "resources/textures/planets/earth/";
+            name = "earth";
+            extension = ".jpg";
             break;
     }
-    specMapID = loadNormalMap(FileSystem::getPath("resources/textures/SpecularMap.png").c_str());
-    int sectorCount = 36;
-    int stackCount = 18;
+    planetTextureID = generateMipmappedTexture(FileSystem::getPath(textureFile + name + extension).c_str());
+    normalMapID = loadNormalMap(FileSystem::getPath(textureFile + name + "Map.png").c_str());
+    specMapID = loadNormalMap(FileSystem::getPath(textureFile + name + "Spec.png").c_str());
+
+    // generate a sphere
     generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -179,8 +183,10 @@ void Planet::makePlanet(Shader& planetShader, int image)
     glEnableVertexAttribArray(2);
 
     planetShader.use();
-    planetShader.setInt(texture, 0);
-    planetShader.setInt("normalMap", 1);
+    //planetShader.setInt(texture, 0);
+    planetShader.setInt("material.diffuse", 0);
+    planetShader.setInt("material.normal", 1);
+    planetShader.setInt("material.specular", 2);
 }
 
 
