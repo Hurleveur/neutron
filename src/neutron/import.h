@@ -39,6 +39,7 @@ public:
 	double vX;
 	double vY;
 	double vZ;
+	glm::vec3 rotation = {1.f, 1.f, 1.f};
 
 	static std::vector<SpaceObject*> objectList;
 };

@@ -29,8 +29,10 @@ void Step(double time);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+constexpr int EARTH_MOON_MASS = 100;
+constexpr int SUN_MASS = 100000000;
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 80.0f));
+Camera camera(glm::vec3(50.0f, 0.0f,50.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -64,13 +66,13 @@ int main()
     Shader shader("shader.vs", "shader.fs");
 
     // make all planets, starting with the sun
-    Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, shader, Sun);
+    Planet sun(SUN_MASS, 5, 0, 0, 0, 0, 0, 0, shader, Sun);
     objectList[&sun] = true;
     Planet mercury(90, .5, 1.5, -30, 0, 0.0004, 0.00015, 0, shader, Mercury);
     objectList[&mercury] = true;
-    Planet earth(100, 1, 0, -50, 0, 0.0003, 0.0001, 0, shader, Earth);
+    Planet earth(100, 1, 50, 0, 0, 0.0001, 0.0003, 0, shader, Earth);
     objectList[&earth] = true;
-    Planet moon(1, .2, 1.5, -51.5, 0, 0.0003 + 0.00008, 0.0001 + 0.00008, 0, shader, Moon);
+    Planet moon(1, .2, 51.5, -1.5, 0, 0.0001, 0.0003 + 0.00008, 0, shader, Moon);
     objectList[&moon] = true;
     Planet mars(60, .8, 1.5, -80, 0, -0.0005, 0.00004, 0, shader, Mars);
     objectList[&mars] = true;
@@ -101,7 +103,7 @@ int main()
         shader.setVec3("light.ambient", 1.f, 1.f, 1.f);
         shader.setVec3("light.diffuse", .7f, .7f, .7f);
         shader.setVec3("light.specular", .5f, .5f, .5f);
-        shader.setFloat("material.shininess", 2.f);
+        shader.setFloat("material.shininess", 200.f);
 
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
@@ -240,13 +242,13 @@ void Step(double time)
     {
         for (auto otherObject : objectList)
         {
-            // dont consider disabled objects
+            // don't consider disabled objects
             // the sun wont be affected by the earth and the earth wont be by the moon or by other same weight planets - for simplicity, and optimisation
             if (!object.second || !otherObject.second || otherObject.first->mass <= object.first->mass)
                 continue;
             double distance = object.first->DistanceFrom(*otherObject.first);
-            // the earth should have a pull much stronger on the moon, because its supposed to be much closer (but we wouldnt see anything if it was real scale)
-            if (object.first->mass * otherObject.first->mass == 100)
+            // the earth should have a pull much stronger on the moon, because its supposed to be much closer (but we wouldn't see anything if it was real scale)
+            if (object.first->mass * otherObject.first->mass == EARTH_MOON_MASS)
                 distance /= 100;
             double pull = otherObject.first->mass * gravitational / (distance * distance) * time;
             object.first->vX += pull * ((otherObject.first->x > object.first->x) ? 1 : -1);
@@ -261,15 +263,35 @@ void Step(double time)
         if (!object.second)
             continue;
         for (auto otherObject : objectList)
-            if (!object.second)
+            if (!object.second || otherObject == object)
                 continue;
-            else if (otherObject != object && object.first->DistanceFrom(*otherObject.first) < (object.first->radius + otherObject.first->radius))
+            else if (object.first->DistanceFrom(*otherObject.first) < (object.first->radius + otherObject.first->radius))
             {
-                // if they have the same weight they'll both be destroyed
-                if(object.first->mass > otherObject.first->mass)
+                // a collision with the sun is fatal
+                if (object.first->mass == SUN_MASS)
                     objectList[otherObject.first] = false;
-                if (object.first->mass < otherObject.first->mass)
+                else if (otherObject.first->mass == SUN_MASS)
                     objectList[object.first] = false;
+                // otherwise both objects move away
+                else
+                {
+                    // determine the strength of the collision
+                    double factor = otherObject.first->mass * object.first->mass * std::sqrt(
+                        (object.first->vX - otherObject.first->vX) * (object.first->vX - otherObject.first->vX) +
+                        (object.first->vY - otherObject.first->vY) * (object.first->vY - otherObject.first->vY) +
+                        (object.first->vZ - otherObject.first->vZ) * (object.first->vZ - otherObject.first->vZ)
+                    );
+                    // make them move away from each other with the strength of the impact
+                    otherObject.first->vX += factor / otherObject.first->mass * (otherObject.first->vX > 0 ? -1 : 1);
+                    otherObject.first->vY += factor / otherObject.first->mass * (otherObject.first->vY > 0 ? -1 : 1);
+                    otherObject.first->vZ += factor / otherObject.first->mass * (otherObject.first->vZ > 0 ? -1 : 1);
+                    object.first->vX += factor / object.first->mass * (object.first->vX > 0 ? -1 : 1);
+                    object.first->vY += factor / object.first->mass * (object.first->vY > 0 ? -1 : 1);
+                    object.first->vZ += factor / object.first->mass * (object.first->vZ > 0 ? -1 : 1);
+                    // move them away enough so they're no longer in collision
+                    object.first->Tick(time);
+                    otherObject.first->Tick(time);
+                }
             }
     }
     return;
