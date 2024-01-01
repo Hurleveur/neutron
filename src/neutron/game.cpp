@@ -66,13 +66,13 @@ int main()
     // make all planets, starting with the sun
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, shader, Sun);
     objectList[&sun] = true;
-    Planet mercury(100, .5, 1.5, -30, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Mercury);
+    Planet mercury(90, .5, 1.5, -30, 0, 0.0004, 0.00015, 0, shader, Mercury);
     objectList[&mercury] = true;
-    Planet earth(100, 1, 0, -50, 0, 0.0002, 0.0001, 0, shader, Earth);
+    Planet earth(100, 1, 0, -50, 0, 0.0003, 0.0001, 0, shader, Earth);
     objectList[&earth] = true;
-    Planet moon(2, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Moon);
+    Planet moon(1, .2, 1.5, -51.5, 0, 0.0003 + 0.00008, 0.0001 + 0.00008, 0, shader, Moon);
     objectList[&moon] = true;
-    Planet mars(100, .8, 1.5, -80, 0, -0.0004 + 0.00008, 0.00004, 0, shader, Mars);
+    Planet mars(60, .8, 1.5, -80, 0, -0.0005, 0.00004, 0, shader, Mars);
     objectList[&mars] = true;
 
 
@@ -246,7 +246,7 @@ void Step(double time)
                 continue;
             double distance = object.first->DistanceFrom(*otherObject.first);
             // the earth should have a pull much stronger on the moon, because its supposed to be much closer (but we wouldnt see anything if it was real scale)
-            if (object.first->mass * otherObject.first->mass == 200)
+            if (object.first->mass * otherObject.first->mass == 100)
                 distance /= 100;
             double pull = otherObject.first->mass * gravitational / (distance * distance) * time;
             object.first->vX += pull * ((otherObject.first->x > object.first->x) ? 1 : -1);
