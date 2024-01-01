@@ -12,6 +12,9 @@
 
 using namespace glm;
 
+int sectorCount = 36;
+int stackCount = 18;
+
 constexpr float skyboxVertices[] = {
     // positions
     -1.0f,  1.0f, -1.0f,
@@ -61,12 +64,6 @@ unsigned int cubemapTexture;
 
 ParticleGenerator *Particles;
 
-// Generate mipmapped texture
-// create vao and vbo
-GLuint VAO, VBO[4], planetTextureID, particleTextureID;
-std::vector<float> vertices, normals, texCoords;
-std::vector<unsigned int> indices;
-
 void makeSkybox(Shader &skyboxShader)
 {
     glGenVertexArrays(1, &skyboxVAO);
@@ -103,23 +100,72 @@ void drawSkybox(Shader &skyboxShader, mat4 &view, mat4 &projection)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
     glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
     glDepthFunc(GL_LESS); // set depth function back to default
 }
 
+SpaceObject::SpaceObject(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ) :
+    mass(mass), radius(radius), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ) {
+}
 
-void makePlanet(Shader& planetShader)
+
+
+void SpaceObject::Tick(double time) {
+    x += vX;
+    y += vY;
+    z += vZ;
+}
+
+
+double SpaceObject::DistanceFrom(const SpaceObject& object) const
 {
-    // spawn planet
-    float radius = 1.0f;
-    int sectorCount = 36;
-    int stackCount = 18;
+    return std::sqrt(
+        (object.x - x) * (object.x - x) +
+        (object.y - y) * (object.y - y) +
+        (object.z - z) * (object.z - z)
+    );
+}
 
-    generateSphere(radius, sectorCount, stackCount, vertices, normals, texCoords, indices);
-    planetTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/planet.jpg").c_str());
+Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, int image) :
+    SpaceObject(mass, radius, posX, posY, posZ, speedX, speedY, speedZ) {
+    this->makePlanet(planetShader, image);
+};
+
+void Planet::makePlanet(Shader& planetShader, int image)
+{
+    std::string textureFile;
+    std::string name;
+    std::string extension;
+    switch (image) {
+        case Sun:
+            textureFile = "resources/textures/planets/sun/";
+            name = "sun.jpeg";
+            break;
+        case Moon:
+            textureFile = "resources/textures/planets/moon/";
+            name = "moon.bmp";
+            break;
+        case Mercury:
+            textureFile = "resources/textures/planets/mercury/";
+            name = "mercury.png";
+            break;
+        case Mars:
+            textureFile = "resources/textures/planets/mars/";
+            name = "mars.png";
+            break;
+        case Earth:
+        default:
+            textureFile = "resources/textures/planets/earth/";
+            name = "earth.jpg";
+            break;
+    }
+    planetTextureID = generateMipmappedTexture(FileSystem::getPath(textureFile + name + extension).c_str());
+    normalMapID = loadNormalMap(FileSystem::getPath(textureFile + "norm.png").c_str());
+    specMapID = loadNormalMap(FileSystem::getPath(textureFile + "spec.png").c_str());
+
+    // generate a sphere
+    generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-
     glGenBuffers(4, VBO);
 
     // Bind and set vertex data (position, normal, and texture coordinates)
@@ -138,33 +184,33 @@ void makePlanet(Shader& planetShader)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
     glEnableVertexAttribArray(2);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
     planetShader.use();
-    planetShader.setInt("earth", 0);
+    //planetShader.setInt(texture, 0);
+    planetShader.setInt("material.diffuse", 0);
+    planetShader.setInt("material.normal", 1);
+    planetShader.setInt("material.specular", 2);
 }
 
 
-void drawPlanet(Shader &planetShader, mat4& view, mat4& projection)
+void Planet::draw(Shader &planetShader)
 {
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    // planet
-    planetShader.use();
-    planetShader.setMat4("view", view);
-    planetShader.setMat4("projection", projection);
-    mat4 model = mat4(1.0f);
-    model = translate(model, vec3(0.0f, -3.0f, 0.0f));
-    model = scale(model, vec3(4.0f, 4.0f, 4.0f));
-    planetShader.setMat4("model", model);
-    glBindVertexArray(VAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, normalMapID);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, specMapID);
+    glBindVertexArray(VAO);
+    // planet
+    planetShader.setFloat("scale", radius);
+
+    mat4 model = mat4(1.0f);
+    model = translate(model, vec3(this->x, this->y, this->z));
+    if(this->vX + this->vY + this->vZ)
+        model = rotate(model, 360.f, vec3(this->vX, this->vY, this->vZ));
+    planetShader.setMat4("model", model);
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
-    glBindVertexArray(0);
 }
 
 void makeParticles(Shader &particleShader) {
@@ -177,4 +223,3 @@ void makeParticles(Shader &particleShader) {
 void drawParticles(Shader &particleShader, float deltaTime, mat4 view, mat4 projection) {
     Particles->Update(deltaTime, 2);
     Particles->Draw(view, projection);
-}
