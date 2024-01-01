@@ -206,8 +206,9 @@ void Planet::draw(Shader &planetShader)
 
     mat4 model = mat4(1.0f);
     model = translate(model, vec3(this->x, this->y, this->z));
+    // note: this is not realistic, but it doesnt matter, it turns +-
     if(this->vX + this->vY + this->vZ)
-        model = rotate(model, 360.f, vec3(this->vX, this->vY, this->vZ));
+        model = rotate(model, 36.f, vec3(this->vX * 10, this->vY * 10, this->vZ * 10));
     planetShader.setMat4("model", model);
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
