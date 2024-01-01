@@ -10,8 +10,9 @@
 #pragma once
 class Shader;
 void makeSkybox(Shader &skyboxShader);
-
 void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection);
+void makeParticles(Shader &particleShader);
+void drawParticles(Shader &particleShader, float deltaTime, glm::mat4 view, glm::mat4 projection);
 
 enum Planets {
     Sun,
@@ -42,14 +43,11 @@ public:
 	static std::vector<SpaceObject*> objectList;
 };
 
-
 class Planet : public SpaceObject {
 public:
     Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader &planetShader, int image);
     void makePlanet(Shader& planetShader, int image);
     void draw(Shader& planetShader);
-    void makeParticles(Shader &particleShader);
-    void drawParticles(Shader &particleShader, float deltaTime, glm::mat4 view, glm::mat4 projection);
 public:
 	GLuint VAO, VBO[4], planetTextureID, normalMapID, specMapID;
 	std::vector<float> vertices, normals, texCoords;

@@ -216,10 +216,10 @@ void Planet::draw(Shader &planetShader)
 void makeParticles(Shader &particleShader) {
     particleShader.use();
     particleShader.setInt("particle", 0);
-    particleTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/particles.png").c_str());
-    Particles = new ParticleGenerator(particleShader, particleTextureID, 500);
+    Particles = new ParticleGenerator(particleShader, generateMipmappedTexture(FileSystem::getPath("resources/textures/particles.png").c_str()), 500);
 }
 
 void drawParticles(Shader &particleShader, float deltaTime, mat4 view, mat4 projection) {
     Particles->Update(deltaTime, 2);
     Particles->Draw(view, projection);
+}
