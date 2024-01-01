@@ -48,10 +48,9 @@ public:
     Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader &planetShader, int image);
     void makePlanet(Shader& planetShader, int image);
     void draw(Shader& planetShader);
-
+    void makeParticles(Shader &particleShader);
+    void drawParticles(Shader &particleShader, float deltaTime, glm::mat4 view, glm::mat4 projection);
 public:
-	// Generate mipmapped texture
-	// create vao and vbo
 	GLuint VAO, VBO[4], planetTextureID, normalMapID, specMapID;
 	std::vector<float> vertices, normals, texCoords;
 	std::vector<unsigned int> indices;

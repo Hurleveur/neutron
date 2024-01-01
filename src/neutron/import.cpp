@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "particle_generator.h"
 
 using namespace glm;
 
@@ -61,7 +62,7 @@ constexpr float skyboxVertices[] = {
 unsigned int skyboxVAO, skyboxVBO;
 unsigned int cubemapTexture;
 
-
+ParticleGenerator *Particles;
 
 void makeSkybox(Shader &skyboxShader)
 {
@@ -211,3 +212,14 @@ void Planet::draw(Shader &planetShader)
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
 }
+
+void makeParticles(Shader &particleShader) {
+    particleShader.use();
+    particleShader.setInt("particle", 0);
+    particleTextureID = generateMipmappedTexture(FileSystem::getPath("resources/textures/particles.png").c_str());
+    Particles = new ParticleGenerator(particleShader, particleTextureID, 500);
+}
+
+void drawParticles(Shader &particleShader, float deltaTime, mat4 view, mat4 projection) {
+    Particles->Update(deltaTime, 2);
+    Particles->Draw(view, projection);
