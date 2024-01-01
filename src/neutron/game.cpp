@@ -56,10 +56,8 @@ int main()
     Shader shader("sun.vs", "sun.fs");
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, shader, Sun);
     objectList.emplace_back(&sun);
-
     Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, shader, Earth);
     objectList.emplace_back(&earth);
-
     Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Moon);
     objectList.emplace_back(&moon);
     // render loop
@@ -105,8 +103,9 @@ int main()
 
         for (auto object : objectList)
         {
-            if (object)
-                object->draw(shader, view, projection, camera);
+            if(object)
+                object->draw(shader);
+            // only the sun needs to be super bright
             shader.setVec3("light.ambient", .2f, .2f, .2f);
         }
 

@@ -141,24 +141,21 @@ void Planet::makePlanet(Shader& planetShader, int image)
     switch (image) {
         case Sun:
             textureFile = "resources/textures/planets/sun/";
-            name = "sun";
-            extension = ".jpeg";
+            name = "sun.jpeg";
             break;
         case Moon:
             textureFile = "resources/textures/planets/moon/";
-            name = "moon";
-            extension = ".bmp";
+            name = "moon.bmp";
             break;
         case Earth:
         default:
             textureFile = "resources/textures/planets/earth/";
-            name = "earth";
-            extension = ".jpg";
+            name = "earth.jpg";
             break;
     }
     planetTextureID = generateMipmappedTexture(FileSystem::getPath(textureFile + name + extension).c_str());
-    normalMapID = loadNormalMap(FileSystem::getPath(textureFile + name + "Map.png").c_str());
-    specMapID = loadNormalMap(FileSystem::getPath(textureFile + name + "Spec.png").c_str());
+    normalMapID = loadNormalMap(FileSystem::getPath(textureFile + "norm.png").c_str());
+    specMapID = loadNormalMap(FileSystem::getPath(textureFile + "spec.png").c_str());
 
     // generate a sphere
     generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
@@ -190,7 +187,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
 }
 
 
-void Planet::draw(Shader &planetShader, mat4& view, mat4& projection, Camera camera)
+void Planet::draw(Shader &planetShader)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
