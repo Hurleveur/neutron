@@ -21,8 +21,6 @@ ParticleGenerator::ParticleGenerator(Shader shader, GLuint texture, unsigned int
 
 void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offset)
 {
-    // printf("ok\n");
-    // add new particles
     for (unsigned int i = 0; i < newParticles; ++i) {
         int unusedParticle = this->firstUnusedParticle();
         this->respawnParticle(this->particles[unusedParticle], offset);
@@ -30,10 +28,10 @@ void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offs
     for (unsigned int i = 0; i < this->amount; ++i) {
         Particle &p = this->particles[i];
         p.Life -= delta;
-        if (p.Life > 0.0f)  {	                    // move particle while alive
-            p.Position -= p.Velocity * delta * 2.0f;
+        if (p.Life > 0.0f)  { // move particle while alive
+            p.Velocity *= (1 - delta);
+            p.Position -= p.Velocity * delta;
             p.Color.a -= delta * 2.5f;
-            if (p.Life < 0.1f) { p.Scale = 0.02f; } // reduce size before despawn
         }
     }
 }
@@ -41,16 +39,17 @@ void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offs
 // render all particles
 void ParticleGenerator::Draw(mat4 view, mat4 projection)
 {
+    glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     this->shader.use();
-    for (Particle particle : this->particles)
+    for (const Particle &particle : this->particles)
     {
         if (particle.Life > 0.0f) {
             //printf("Particle: %f\n", particle.Life);
             this->shader.setVec3("offset", particle.Position);
             this->shader.setMat4("view", view);
             this->shader.setMat4("projection", projection);
-            this->shader.setFloat("scale", particle.Scale);
+            this->shader.setFloat("scale", particle.Life / 8 - 0.01);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, this->texture);
             glBindVertexArray(this->VAO);
@@ -58,6 +57,7 @@ void ParticleGenerator::Draw(mat4 view, mat4 projection)
             glBindVertexArray(0);
         }
     }
+    glEnable(GL_DEPTH_TEST);
 }
 
 void ParticleGenerator::init()
@@ -116,9 +116,9 @@ void ParticleGenerator::respawnParticle(Particle &particle, glm::vec3 offset)
 {
     float random = (rand() % 100)/100.0f;
     float rColor = 0.5f + ((rand() % 100) / 100.0f);
-    particle.Position = glm::vec3((rand() % 100)/100.0f + offset.x, (rand() % 100)/100.0f + offset.y, (rand() % 100)/100.0f + offset.z);
+    particle.Position = glm::vec3((rand() % 100)/10.0f + offset.x, (rand() % 100)/10.0f + offset.y, (rand() % 100)/10.0f + offset.z);
     particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
     particle.Life = 1.0f;
     particle.Scale = 0.04f;
-    particle.Velocity = glm::vec3((rand() % 20) - 10, (rand() % 20) - 10, (rand() % 20) - 10);
+    particle.Velocity = glm::vec3((rand() % 20) - 10, (rand() % 20) - 10, (rand() % 20) - 10) / 2.f;
 }

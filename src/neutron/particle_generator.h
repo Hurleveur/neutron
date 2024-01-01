@@ -34,7 +34,7 @@ public:
     // constructor
     ParticleGenerator(Shader shader, GLuint texture, unsigned int amount);
     // update all particles
-    void Update(float dt, unsigned int newParticles, glm::vec3 offset = glm::vec3(0.0f, 0.0f, 0.0f));
+    void Update(float dt, unsigned int newParticles, glm::vec3 offset = glm::vec3(-5.0f, -5.0f, -5.0f));
     // render all particles
     void Draw(glm::mat4 view, glm::mat4 projection);
 private:
