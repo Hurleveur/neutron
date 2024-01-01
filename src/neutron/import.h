@@ -30,8 +30,8 @@ public:
 	double DistanceFrom(const SpaceObject& object) const;
 
 public:
-	int mass = 1000;
-	float radius;
+	int mass = 100;
+	float radius = 1.f;
 	double x;
 	double y;
 	double z;
@@ -40,7 +40,6 @@ public:
 	double vZ;
 
 	static std::vector<SpaceObject*> objectList;
-	static SpaceObject* biggestMass;
 };
 
 

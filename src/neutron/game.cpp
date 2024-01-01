@@ -15,7 +15,7 @@
 #include <vector>
 #include <map>
 
-
+// utility functions
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -23,14 +23,14 @@ void processInput(GLFWwindow* window);
 unsigned int loadTexture(const char* path);
 unsigned int loadCubemap(vector<std::string> faces);
 GLFWwindow* init();
-Planet *Step(double time);
+void Step(double time);
 
-// settings
+// window settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, -60.0f, 80.0f));
+Camera camera(glm::vec3(0.0f, -50.0f, 10.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -38,80 +38,79 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
+// stops time
 bool stop = false;
 
-std::vector<Planet*> objectList;
+// the objects and if they should be rendered
+std::map<Planet*, bool> objectList;
 
 int main()
 {
+    // setup all GLFW and enable opengl
     GLFWwindow* window = init();
     if (!window)
         return -1;
+    
+    // to move faster
     camera.MovementSpeed *= 6;
 
-    // build and compile shaders
-    // -------------------------
+    // make shaders and objects, with VBO and VAO
+    // skybox
     Shader skyboxShader("skybox.vs", "skybox.fs");
     makeSkybox(skyboxShader);
 
     Shader shader("sun.vs", "sun.fs");
+
+    // make all planets, starting with the sun
     Planet sun(100000000, 5, 0, 0, 0, 0, 0, 0, shader, Sun);
-    objectList.emplace_back(&sun);
-    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, shader, Earth);
-    objectList.emplace_back(&earth);
-    Planet moon(1, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Moon);
-    objectList.emplace_back(&moon);
-    Planet mars(100, .8, 1.5, -80, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Mars);
-    objectList.emplace_back(&mars);
+    objectList[&sun] = true;
     Planet mercury(100, .5, 1.5, -30, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Mercury);
-    objectList.emplace_back(&mercury);
-    // render loop
-    // -----------
+    objectList[&mercury] = true;
+    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, shader, Earth);
+    objectList[&earth] = true;
+    Planet moon(2, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Moon);
+    objectList[&moon] = true;
+    Planet mars(100, .8, 1.5, -80, 0, -0.0004 + 0.00008, 0.00004, 0, shader, Mars);
+    objectList[&mars] = true;
+
+
     float currentFrame;
-    Planet *planetToDestroy = nullptr;
     while (!glfwWindowShouldClose(window))
     {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-
         processInput(window);
 
-        planetToDestroy = Step(deltaTime);
-        /*
-        if (planetToDestroy)
-            // TODO: make it go boom
-            objectList[planetToDestroy] = nullptr;
-        */
+        // step gravity and movement, with physics, and do collision detection
+        Step(deltaTime);
 
         // render
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
+        // Shader properties
         shader.use();
         shader.setVec3("light.position", 0.f, 0.f, 0.f);
         shader.setVec3("viewPos", camera.Position);
-        // light properties
         shader.setVec3("light.ambient", 1.f, 1.f, 1.f);
         shader.setVec3("light.diffuse", .7f, .7f, .7f);
         shader.setVec3("light.specular", .5f, .5f, .5f);
-
-        // material properties
         shader.setFloat("material.shininess", 2.f);
 
+        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
+        // render all objects (the model is calculated in the function)
         for (auto object : objectList)
         {
-            if(object)
-                object->draw(shader);
-            // only the sun needs to be super bright
+            if(object.second)
+                object.first->draw(shader);
+            // only the sun needs to be super bright, and its drawn first
             shader.setVec3("light.ambient", .2f, .2f, .2f);
         }
 
@@ -227,41 +226,46 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 
-Planet *Step(double time)
+void Step(double time)
 {
-    SpaceObject* sun = SpaceObject::biggestMass;
-    if (!sun || stop)
-        return nullptr;
+    if (stop)
+        return;
     static const double gravitational = 6.674 / 100000000000;
     for (auto object : objectList)
     {
         for (auto otherObject : objectList)
         {
-            // the sun wont be affected by the earth and the earth wont be by the moon - for simplicity
-            if (otherObject->mass <= object->mass)
+            // dont consider disabled objects
+            // the sun wont be affected by the earth and the earth wont be by the moon or by other same weight planets - for simplicity, and optimisation
+            if (!object.second || !otherObject.second || otherObject.first->mass <= object.first->mass)
                 continue;
-            double distance = object->DistanceFrom(*otherObject);
-            // the earth should have a pull much stronger on the moon, because its supposed to be much closer
-            if (object->mass * otherObject->mass == 100)
+            double distance = object.first->DistanceFrom(*otherObject.first);
+            // the earth should have a pull much stronger on the moon, because its supposed to be much closer (but we wouldnt see anything if it was real scale)
+            if (object.first->mass * otherObject.first->mass == 200)
                 distance /= 100;
-            double pull = otherObject->mass * gravitational / (distance * distance) * time;
-            object->vX += pull * ((otherObject->x > object->x) ? 1 : -1);
-            object->vY += pull * ((otherObject->y > object->y) ? 1 : -1);
-            object->vZ += pull * ((otherObject->z > object->z) ? 1 : -1);
+            double pull = otherObject.first->mass * gravitational / (distance * distance) * time;
+            object.first->vX += pull * ((otherObject.first->x > object.first->x) ? 1 : -1);
+            object.first->vY += pull * ((otherObject.first->y > object.first->y) ? 1 : -1);
+            object.first->vZ += pull * ((otherObject.first->z > object.first->z) ? 1 : -1);
         }
     }
     for (auto object : objectList)
-        object->Tick(time);
-    // we assume at most one object destruction per tick
-    Planet* objectToRemove = nullptr;
+        object.first->Tick(time);
     for (auto object : objectList)
     {
+        if (!object.second)
+            continue;
         for (auto otherObject : objectList)
-            if (otherObject != object && object->DistanceFrom(*otherObject) < (object->radius + otherObject->radius))
+            if (!object.second)
+                continue;
+            else if (otherObject != object && object.first->DistanceFrom(*otherObject.first) < (object.first->radius + otherObject.first->radius))
             {
-                objectToRemove = object->mass > otherObject->mass ? otherObject : object;
-                return objectToRemove;
+                // if they have the same weight they'll both be destroyed
+                if(object.first->mass > otherObject.first->mass)
+                    objectList[otherObject.first] = false;
+                if (object.first->mass < otherObject.first->mass)
+                    objectList[object.first] = false;
             }
     }
-    return objectToRemove;
+    return;
 }

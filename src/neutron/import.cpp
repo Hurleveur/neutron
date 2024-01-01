@@ -102,12 +102,8 @@ void drawSkybox(Shader &skyboxShader, mat4 &view, mat4 &projection)
     glDepthFunc(GL_LESS); // set depth function back to default
 }
 
-SpaceObject* SpaceObject::biggestMass = nullptr;
-
 SpaceObject::SpaceObject(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ) :
     mass(mass), radius(radius), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ) {
-    if (!biggestMass || this->mass > biggestMass->mass)
-        biggestMass = this;
 }
 
 
