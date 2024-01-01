@@ -30,7 +30,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, -50.0f, 10.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 80.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -68,7 +68,7 @@ int main()
     objectList[&sun] = true;
     Planet mercury(100, .5, 1.5, -30, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Mercury);
     objectList[&mercury] = true;
-    Planet earth(100, 1, 0, -50, 0, 0.0004, 0, 0, shader, Earth);
+    Planet earth(100, 1, 0, -50, 0, 0.0002, 0.0001, 0, shader, Earth);
     objectList[&earth] = true;
     Planet moon(2, .2, 1.5, -51.5, 0, 0.0004 + 0.00008, 0.00004, 0, shader, Moon);
     objectList[&moon] = true;
@@ -76,6 +76,7 @@ int main()
     objectList[&mars] = true;
 
 
+    glfwSwapInterval(0);
     float currentFrame;
     while (!glfwWindowShouldClose(window))
     {
@@ -103,8 +104,7 @@ int main()
         shader.setFloat("material.shininess", 2.f);
 
         glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
