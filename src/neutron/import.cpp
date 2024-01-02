@@ -138,7 +138,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
     switch (image) {
         case Sun:
             textureFile = "resources/textures/planets/sun/";
-            name = "sun.jpeg";
+            name = "sun.jpg";
             break;
         case Moon:
             textureFile = "resources/textures/planets/moon/";
