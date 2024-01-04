@@ -51,6 +51,4 @@ public:
     void draw(Shader& planetShader);
 public:
 	GLuint VAO, VBO[4], planetTextureID, normalMapID, specMapID;
-	std::vector<float> vertices, normals, texCoords, tangents;
-	std::vector<unsigned int> indices;
 };

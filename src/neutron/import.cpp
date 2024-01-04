@@ -14,6 +14,8 @@ using namespace glm;
 
 int sectorCount = 36;
 int stackCount = 18;
+std::vector<float> vertices, normals, texCoords, tangents;
+std::vector<unsigned int> indices;
 
 constexpr float skyboxVertices[] = {
     // positions
@@ -162,9 +164,12 @@ void Planet::makePlanet(Shader& planetShader, int image)
     specMapID = loadNormalMap(FileSystem::getPath(textureFile + "spec.png").c_str());
 
     // generate a sphere
-    generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices, tangents);
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
+
+    if (vertices.empty())
+        generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices, tangents);
+
     glGenBuffers(4, VBO);
 
     // Bind and set vertex data (position, normal, and texture coordinates)
