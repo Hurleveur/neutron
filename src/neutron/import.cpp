@@ -210,15 +210,15 @@ void Planet::draw(Shader &planetShader)
     // identity matrix
     mat4 model = mat4(1.0f);
 
+    model = translate(model, vec3(this->x, this->y, this->z));
     model = scale(model, vec3(radius));
-    /*
+    
     rotation += vec3(this->vX, this->vY, this->vZ);
     model = rotate(model, rotation.x, vec3(1.f, 0.f, 0.f));
     model = rotate(model, rotation.y, vec3(0.f, 1.f, 0.f));
     model = rotate(model, rotation.z, vec3(0.f, 0.f, 1.f));
-    */
+    
 
-    model = translate(model, vec3(this->x, this->y, this->z));
     planetShader.setMat4("model", model);
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());

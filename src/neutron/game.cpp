@@ -41,7 +41,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 // stops time
-bool stop = true;
+bool stop = false;
 
 // the objects and if they should be rendered
 std::map<Planet*, bool> objectList;
@@ -89,7 +89,7 @@ int main()
         processInput(window);
 
         // step gravity and movement, with physics, and do collision detection
-        //Step(deltaTime);
+        Step(deltaTime);
 
         // render
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -103,7 +103,6 @@ int main()
         shader.setVec3("light.ambient", 1.f, 1.f, 1.f);
         shader.setVec3("light.diffuse", .7f, .7f, .7f);
         shader.setVec3("light.specular", .5f, .5f, .5f);
-        shader.setFloat("material.shininess", 20.f);
 
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);

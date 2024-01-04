@@ -1,6 +1,6 @@
 #version 330 core
-in vec3 FragPos;
 in vec2 TexCoords;
+in vec3 FragPos;
 in mat3 TBN;
 
 out vec4 FragColor;
@@ -9,7 +9,6 @@ struct Material {
     sampler2D diffuse;
     sampler2D normal;
     sampler2D specular;
-    float shininess;
 };
 
 struct Light {
@@ -36,7 +35,8 @@ void main() {
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    // use default shininess
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
     FragColor = vec4((ambient + diffuse + specular), 1.0);
