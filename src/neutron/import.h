@@ -3,17 +3,17 @@
 #include <cmath>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <learnopengl/camera.h>
 
 #pragma once
 class Shader;
+// Skybox management.
 void makeSkybox(Shader &skyboxShader);
 void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection);
+// Particles management.
 void makeParticles(Shader &particleShader);
-void drawParticles(Shader &particleShader, float deltaTime, glm::mat4 view, glm::mat4 projection);
+void drawParticles(Shader &particleShader, float deltaTime);
 
+// For each planet, that have corresponding textures.
 enum Planets {
     Sun,
     Earth,
@@ -23,12 +23,14 @@ enum Planets {
 };
 
 
-class SpaceObject {
+class Planet {
 public:
-	SpaceObject(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ);
+	Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, int image);
 
 	void Tick(double time);
-	double DistanceFrom(const SpaceObject& object) const;
+	double DistanceFrom(const Planet& object) const;
+	void makePlanet(Shader& planetShader, int image);
+	void draw(Shader& planetShader);
 
 public:
 	int mass = 100;
@@ -41,14 +43,5 @@ public:
 	double vZ;
 	glm::vec3 rotation = {1.f, 1.f, 1.f};
 
-	static std::vector<SpaceObject*> objectList;
-};
-
-class Planet : public SpaceObject {
-public:
-    Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader &planetShader, int image);
-    void makePlanet(Shader& planetShader, int image);
-    void draw(Shader& planetShader);
-public:
 	GLuint VAO, VBO[4], planetTextureID, normalMapID, specMapID;
 };

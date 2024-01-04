@@ -13,15 +13,16 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include "import.h"
-#include <learnopengl/shader_m.h>
+
+class Shader;
 
 // Represents a single particle and its state
 struct Particle {
-    glm::vec3 Position, Velocity;
-    glm::vec4 Color;
-    float Life, Scale;
+    glm::vec3 position, velocity;
+    glm::vec4 color;
+    float life = 0.f;
 
-    Particle() : Position(0.0f), Velocity(0.0f), Color(1.0f), Life(0.0f) { }
+    Particle() : position(0.0f), velocity(0.0f), color(1.0f) { }
 };
 
 
@@ -32,19 +33,19 @@ class ParticleGenerator
 {
 public:
     // constructor
-    ParticleGenerator(Shader shader, GLuint texture, unsigned int amount);
+    ParticleGenerator(GLuint texture, unsigned int amount);
     // update all particles
     void Update(float dt, unsigned int newParticles, glm::vec3 offset = glm::vec3(-5.0f, -5.0f, -5.0f));
     // render all particles
-    void Draw(glm::mat4 view, glm::mat4 projection);
+    void Draw(Shader &shader);
 private:
     // state
     std::vector<Particle> particles;
     unsigned int amount;
     // render state
-    Shader shader;
     GLuint texture;
     unsigned int VAO;
+
     // initializes buffer and vertex attributes
     void init();
     // returns the first Particle index that's currently unused e.g. Life <= 0.0f or 0 if no particle is currently inactive

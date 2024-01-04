@@ -116,10 +116,13 @@ int main()
             // only the sun needs to be super bright, and its drawn first
             shader.setVec3("light.ambient", .2f, .2f, .2f);
         }
+        particleShader.use();
+        particleShader.setMat4("viewProjection", projection * view);
 
+        drawParticles(particleShader, deltaTime);
+
+        // draw skybox as last
         drawSkybox(skyboxShader, view, projection);
-
-        drawParticles(particleShader, deltaTime, view, projection);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

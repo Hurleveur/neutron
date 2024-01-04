@@ -1,14 +1,14 @@
 #include "textures.h"
 #include "import.h"
+#include "planet.h"
+#include "particle_generator.h"
+
 #include <learnopengl/filesystem.h>
-#include <iostream>
 #include <glad/glad.h>
 #include <learnopengl/shader.h>
-#include "planet.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "particle_generator.h"
 
 using namespace glm;
 
@@ -66,6 +66,7 @@ unsigned int cubemapTexture;
 
 ParticleGenerator *Particles;
 
+
 void makeSkybox(Shader &skyboxShader)
 {
     glGenVertexArrays(1, &skyboxVAO);
@@ -92,7 +93,6 @@ void makeSkybox(Shader &skyboxShader)
 
 void drawSkybox(Shader &skyboxShader, mat4 &view, mat4 &projection)
 {
-    // draw skybox as last
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     skyboxShader.use();
     skyboxShader.setMat4("view", mat3(view));
@@ -105,20 +105,31 @@ void drawSkybox(Shader &skyboxShader, mat4 &view, mat4 &projection)
     glDepthFunc(GL_LESS); // set depth function back to default
 }
 
-SpaceObject::SpaceObject(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ) :
-    mass(mass), radius(radius), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ) {
+
+
+void makeParticles(Shader& particleShader) {
+    particleShader.use();
+    particleShader.setInt("particle", 0);
+    // make 100 of them to start with
+    Particles = new ParticleGenerator(generateMipmappedTexture(FileSystem::getPath("resources/textures/particles.png").c_str()), 200);
+}
+
+void drawParticles(Shader& particleShader, float deltaTime) {
+    Particles->Update(deltaTime, 4);
+    Particles->Draw(particleShader);
 }
 
 
 
-void SpaceObject::Tick(double time) {
+// Planet (part that would be common to multiple space objects first)
+void Planet::Tick(double time) {
     x += vX;
     y += vY;
     z += vZ;
 }
 
 
-double SpaceObject::DistanceFrom(const SpaceObject& object) const
+double Planet::DistanceFrom(const Planet& object) const
 {
     return std::sqrt(
         (object.x - x) * (object.x - x) +
@@ -127,8 +138,10 @@ double SpaceObject::DistanceFrom(const SpaceObject& object) const
     );
 }
 
+
 Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, int image) :
-    SpaceObject(mass, radius, posX, posY, posZ, speedX, speedY, speedZ) {
+    mass(mass), radius(radius), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ)
+{
     this->makePlanet(planetShader, image);
 };
 
@@ -227,15 +240,4 @@ void Planet::draw(Shader &planetShader)
     planetShader.setMat4("model", model);
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
-}
-
-void makeParticles(Shader &particleShader) {
-    particleShader.use();
-    particleShader.setInt("particle", 0);
-    Particles = new ParticleGenerator(particleShader, generateMipmappedTexture(FileSystem::getPath("resources/textures/particles.png").c_str()), 100);
-}
-
-void drawParticles(Shader &particleShader, float deltaTime, mat4 view, mat4 projection) {
-    Particles->Update(deltaTime, 2);
-    Particles->Draw(view, projection);
 }

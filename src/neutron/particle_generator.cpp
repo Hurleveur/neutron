@@ -13,46 +13,46 @@
 using namespace glm;
 using namespace std;
 
-ParticleGenerator::ParticleGenerator(Shader shader, GLuint texture, unsigned int amount)
-    : shader(shader), texture(texture), amount(amount)
+ParticleGenerator::ParticleGenerator(GLuint texture, unsigned int amount)
+    : texture(texture), amount(amount)
 {
-    this->init();
+    init();
 }
 
 void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offset)
 {
     for (unsigned int i = 0; i < newParticles; ++i) {
-        int unusedParticle = this->firstUnusedParticle();
-        this->respawnParticle(this->particles[unusedParticle], offset);
+        int unusedParticle = firstUnusedParticle();
+        respawnParticle(particles[unusedParticle], offset);
     }
-    for (unsigned int i = 0; i < this->amount; ++i) {
-        Particle &p = this->particles[i];
-        p.Life -= delta;
-        if (p.Life > 0.0f)  { // move particle while alive
-            p.Velocity *= (1 - delta);
-            p.Position -= p.Velocity * delta;
-            p.Color.a -= delta * 2.5f;
+    for (unsigned int i = 0; i < amount; ++i) {
+        Particle &p = particles[i];
+        p.life -= delta;
+        if (p.life > 0.0f)  { // move particle while alive
+            p.velocity *= (1 - delta);
+            p.position -= p.velocity * delta;
+            p.color.a -= delta * 2.5f;
         }
     }
 }
 
 // render all particles
-void ParticleGenerator::Draw(mat4 view, mat4 projection)
+void ParticleGenerator::Draw(Shader &shader)
 {
+    // make them spottable even behind the sun
     glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    this->shader.use();
-    for (const Particle &particle : this->particles)
+    shader.use();
+    for (const Particle &particle : particles)
     {
-        if (particle.Life > 0.0f) {
-            //printf("Particle: %f\n", particle.Life);
-            this->shader.setVec3("offset", particle.Position);
-            this->shader.setMat4("view", view);
-            this->shader.setMat4("projection", projection);
-            this->shader.setFloat("scale", particle.Life / 8 - 0.01);
+        if (particle.life > 0.0f) {
+            shader.setVec3("offset", particle.position);
+            // make the size proportionate to the time left
+            shader.setFloat("scale", particle.life / 8 - 0.01);
+            shader.setVec4("color", particle.color);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, this->texture);
-            glBindVertexArray(this->VAO);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glBindVertexArray(VAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glBindVertexArray(0);
         }
@@ -73,9 +73,9 @@ void ParticleGenerator::init()
         1.0f, 1.0f, 1.0f, 1.0f,
         1.0f, 0.0f, 1.0f, 0.0f
     };
-    glGenVertexArrays(1, &this->VAO);
+    glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glBindVertexArray(this->VAO);
+    glBindVertexArray(VAO);
     // fill mesh buffer
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(particle_quad), particle_quad, GL_STATIC_DRAW);
@@ -84,9 +84,9 @@ void ParticleGenerator::init()
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glBindVertexArray(0);
 
-    // create this->amount default particle instances
-    for (unsigned int i = 0; i < this->amount; ++i)
-        this->particles.push_back(Particle());
+    // create amount default particle instances
+    for (unsigned int i = 0; i < amount; ++i)
+        particles.push_back(Particle());
 }
 
 // stores the index of the last particle used (for quick access to next dead particle)
@@ -94,15 +94,15 @@ unsigned int lastUsedParticle = 0;
 unsigned int ParticleGenerator::firstUnusedParticle()
 {
     // first search from last used particle, this will usually return almost instantly
-    for (unsigned int i = lastUsedParticle; i < this->amount; ++i){
-        if (this->particles[i].Life <= 0.0f){
+    for (unsigned int i = lastUsedParticle; i < amount; ++i){
+        if (particles[i].life <= 0.0f){
             lastUsedParticle = i;
             return i;
         }
     }
     // otherwise, do a linear search
     for (unsigned int i = 0; i < lastUsedParticle; ++i){
-        if (this->particles[i].Life <= 0.0f){
+        if (particles[i].life <= 0.0f){
             lastUsedParticle = i;
             return i;
         }
@@ -114,11 +114,9 @@ unsigned int ParticleGenerator::firstUnusedParticle()
 
 void ParticleGenerator::respawnParticle(Particle &particle, glm::vec3 offset)
 {
-    float random = (rand() % 100)/100.0f;
-    float rColor = 0.5f + ((rand() % 100) / 100.0f);
-    particle.Position = glm::vec3((rand() % 100)/10.0f + offset.x, (rand() % 100)/10.0f + offset.y, (rand() % 100)/10.0f + offset.z);
-    particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
-    particle.Life = 1.0f;
-    particle.Scale = 0.04f;
-    particle.Velocity = glm::vec3((rand() % 20) - 10, (rand() % 20) - 10, (rand() % 20) - 10) / 2.f;
+    float rColor = ((rand() % 100) / 100.0f) - 0.3f;
+    particle.position = glm::vec3((rand() % 100)/10.0f + offset.x, (rand() % 100)/10.0f + offset.y, (rand() % 100)/10.0f + offset.z);
+    particle.color = glm::vec4(rColor, rColor > 0.75f ? rColor / 2.f : 0.f, 0, 1.f);
+    particle.life = 1.0f;
+    particle.velocity = glm::vec3((rand() % 20) - 10, (rand() % 20) - 10, (rand() % 20) - 10) / 2.f;
 }
