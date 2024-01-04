@@ -6,36 +6,26 @@ layout (location = 3) in vec3 aTangent;
 layout (location = 4) in vec3 aBitangent;
 
 out vec3 FragPos;
-out vec3 Normal;
 out vec2 TexCoords;
-out vec3 TangentLightPos;
-out vec3 TangentViewPos;
-out vec3 TangentFragPos;
+out mat3 TBN;
 
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-uniform float scale;
+uniform mat4 viewProjection;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 
 void main()
 {
-    FragPos = vec3(model * vec4(aPos*scale, 1.0));
-    Normal = mat3(transpose(inverse(model))) * aNormal;
+    mat3 normalMatrix = mat3(model);
 
-    mat3 normalMatrix = transpose(inverse(mat3(model)));
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    gl_Position = viewProjection * vec4(FragPos, 1.0);
+    TexCoords = aTexCoords;
+
     vec3 T = normalize(normalMatrix * aTangent);
     vec3 N = normalize(normalMatrix * aNormal);
-    T = normalize(T - dot(T, N) * N);
     vec3 B = cross(N, T);
 
-    mat3 TBN = transpose(mat3(T, B, N));
-    TangentLightPos = TBN * lightPos;
-    TangentViewPos  = TBN * viewPos;
-    TangentFragPos  = TBN * FragPos;
-
-    gl_Position = projection * view * vec4(FragPos, 1.0);
-    TexCoords = aTexCoords;
+    TBN = mat3(T, B, N);
 }

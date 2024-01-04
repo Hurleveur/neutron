@@ -134,7 +134,6 @@ void Planet::makePlanet(Shader& planetShader, int image)
 {
     std::string textureFile;
     std::string name;
-    std::string extension;
     switch (image) {
         case Sun:
             textureFile = "resources/textures/planets/sun/";
@@ -158,12 +157,12 @@ void Planet::makePlanet(Shader& planetShader, int image)
             name = "earth.jpg";
             break;
     }
-    planetTextureID = generateMipmappedTexture(FileSystem::getPath(textureFile + name + extension).c_str());
+    planetTextureID = generateMipmappedTexture(FileSystem::getPath(textureFile + name).c_str());
     normalMapID = loadNormalMap(FileSystem::getPath(textureFile + "norm.png").c_str());
     specMapID = loadNormalMap(FileSystem::getPath(textureFile + "spec.png").c_str());
 
     // generate a sphere
-    generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices);
+    generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices, tangents);
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(4, VBO);
@@ -184,10 +183,16 @@ void Planet::makePlanet(Shader& planetShader, int image)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
     glEnableVertexAttribArray(2);
 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
+    glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(float), tangents.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(3);
+    glBindVertexArray(0);
+
     planetShader.use();
     //planetShader.setInt(texture, 0);
     planetShader.setInt("material.diffuse", 0);
-    planetShader.setInt("normalMap", 1);
+    planetShader.setInt("material.normal", 1);
     planetShader.setInt("material.specular", 2);
 }
 
@@ -201,16 +206,19 @@ void Planet::draw(Shader &planetShader)
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, specMapID);
     glBindVertexArray(VAO);
-    // planet
-    planetShader.setFloat("scale", radius);
 
+    // identity matrix
     mat4 model = mat4(1.0f);
-    model = translate(model, vec3(this->x, this->y, this->z));
 
+    model = scale(model, vec3(radius));
+    /*
     rotation += vec3(this->vX, this->vY, this->vZ);
     model = rotate(model, rotation.x, vec3(1.f, 0.f, 0.f));
     model = rotate(model, rotation.y, vec3(0.f, 1.f, 0.f));
     model = rotate(model, rotation.z, vec3(0.f, 0.f, 1.f));
+    */
+
+    model = translate(model, vec3(this->x, this->y, this->z));
     planetShader.setMat4("model", model);
     // Render the sphere
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());

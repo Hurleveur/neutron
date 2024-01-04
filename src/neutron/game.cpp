@@ -26,8 +26,8 @@ GLFWwindow* init();
 void Step(double time);
 
 // window settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 900;
 
 constexpr int EARTH_MOON_MASS = 100;
 constexpr int SUN_MASS = 100000000;
@@ -41,7 +41,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 // stops time
-bool stop = false;
+bool stop = true;
 
 // the objects and if they should be rendered
 std::map<Planet*, bool> objectList;
@@ -78,7 +78,7 @@ int main()
     objectList[&mars] = true;
 
 
-    glfwSwapInterval(0);
+    //glfwSwapInterval(0);
     float currentFrame;
     while (!glfwWindowShouldClose(window))
     {
@@ -89,11 +89,11 @@ int main()
         processInput(window);
 
         // step gravity and movement, with physics, and do collision detection
-        Step(deltaTime);
+        //Step(deltaTime);
 
         // render
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
 
         // Shader properties
@@ -103,12 +103,11 @@ int main()
         shader.setVec3("light.ambient", 1.f, 1.f, 1.f);
         shader.setVec3("light.diffuse", .7f, .7f, .7f);
         shader.setVec3("light.specular", .5f, .5f, .5f);
-        shader.setFloat("material.shininess", 200.f);
+        shader.setFloat("material.shininess", 20.f);
 
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        shader.setMat4("view", view);
-        shader.setMat4("projection", projection);
+        shader.setMat4("viewProjection", projection * view);
 
         // render all objects (the model is calculated in the function)
         for (auto object : objectList)
