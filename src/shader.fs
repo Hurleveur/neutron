@@ -36,7 +36,7 @@ void main() {
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     // use default shininess
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 5.0);
     vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
     FragColor = vec4((ambient + diffuse + specular), 1.0);
