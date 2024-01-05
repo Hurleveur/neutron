@@ -115,7 +115,8 @@ void makeParticles(Shader& particleShader) {
 }
 
 void drawParticles(Shader& particleShader, float deltaTime) {
-    Particles->Update(deltaTime, 4);
+    if(deltaTime)
+        Particles->Update(deltaTime, 4);
     Particles->Draw(particleShader);
 }
 

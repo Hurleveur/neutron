@@ -101,6 +101,7 @@ int main()
 
         // render
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        // we dont need to clear GL_COLOR_BUFFER_BIT due to the skybox
         glClear(GL_DEPTH_BUFFER_BIT);
 
 
@@ -127,7 +128,7 @@ int main()
         particleShader.use();
         particleShader.setMat4("viewProjection", projection * view);
 
-        drawParticles(particleShader, deltaTime);
+        drawParticles(particleShader, stop ? 0 : deltaTime);
 
         // draw skybox as last
         drawSkybox(skyboxShader, view, projection);
