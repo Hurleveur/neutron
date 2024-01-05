@@ -186,7 +186,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
 
     glGenBuffers(4, VBO);
 
-    // Bind and set vertex data (position, normal, and texture coordinates)
+    // Bind and set vertex data (position, normal, texture coordinates and tangents)
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
