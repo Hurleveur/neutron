@@ -40,7 +40,7 @@ void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offs
 void ParticleGenerator::Draw(Shader &shader)
 {
     // make them spottable even behind other objects like the sun
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     shader.use();
     for (const Particle &particle : particles)
