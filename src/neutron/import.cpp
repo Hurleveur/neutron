@@ -177,10 +177,10 @@ void Planet::makePlanet(Shader& planetShader, int image)
     normalMapID = loadNormalMap(FileSystem::getPath(textureFile + "norm.png").c_str());
     specMapID = loadNormalMap(FileSystem::getPath(textureFile + "spec.png").c_str());
 
-    // generate a sphere
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
+    // generate a sphere once and then use it for all VBO and VAO
     if (vertices.empty())
         generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices, tangents);
 
