@@ -31,7 +31,7 @@ void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offs
         if (p.life > 0.0f)  { // move particle while alive
             p.velocity *= (1 - delta);
             p.position -= p.velocity * delta;
-            p.color.a -= delta * 2.5f;
+            //p.color.x -= delta * 2.5f;
         }
     }
 }
@@ -39,7 +39,7 @@ void ParticleGenerator::Update(float delta, unsigned int newParticles, vec3 offs
 // render all particles
 void ParticleGenerator::Draw(Shader &shader)
 {
-    // make them spottable even behind the sun
+    // make them spottable even behind other objects like the sun
     glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     shader.use();
@@ -48,8 +48,8 @@ void ParticleGenerator::Draw(Shader &shader)
         if (particle.life > 0.0f) {
             shader.setVec3("offset", particle.position);
             // make the size proportionate to the time left
-            shader.setFloat("scale", particle.life / 8 - 0.01);
-            shader.setVec4("color", particle.color);
+            shader.setFloat("scale", particle.life / 8);
+            //shader.setVec4("color", particle.color);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture);
             glBindVertexArray(VAO);
@@ -114,9 +114,10 @@ unsigned int ParticleGenerator::firstUnusedParticle()
 
 void ParticleGenerator::respawnParticle(Particle &particle, glm::vec3 offset)
 {
-    float rColor = ((rand() % 100) / 100.0f) - 0.3f;
+    // we don't need the color, but they work
+    //float rColor = ((rand() % 100) / 100.0f) - 0.3f;
     particle.position = glm::vec3((rand() % 100)/10.0f + offset.x, (rand() % 100)/10.0f + offset.y, (rand() % 100)/10.0f + offset.z);
-    particle.color = glm::vec4(rColor, rColor > 0.75f ? rColor / 2.f : 0.f, 0, 1.f);
+    //particle.color = glm::vec4(rColor, rColor > 0.75f ? rColor / 2.f : 0.f, 0, 1.f);
     particle.life = 1.0f;
     particle.velocity = glm::vec3((rand() % 20) - 10, (rand() % 20) - 10, (rand() % 20) - 10) / 2.f;
 }

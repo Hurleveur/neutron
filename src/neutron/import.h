@@ -30,7 +30,7 @@ public:
 	void Tick(double time);
 	double DistanceFrom(const Planet& object) const;
 	void makePlanet(Shader& planetShader, int image);
-	void draw(Shader& planetShader);
+	void draw(Shader& planetShader, double time);
 
 public:
 	int mass = 100;

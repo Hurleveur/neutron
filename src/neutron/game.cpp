@@ -42,6 +42,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 // stops time
 bool stop = false;
+float stopTimeout = 0.0f;
 
 // the objects and if they should be rendered
 std::map<Planet*, bool> objectList;
@@ -53,6 +54,9 @@ int main()
     if (!window)
         return -1;
     
+    std::cout << "Welcome to the solar system simulator, featuring particles within the Sun, a physics simulator including gravity and collisions with devastating effects (that is doing the simili orbits), realistic planets with Phong shaders and even normal mapping (each planet featuring their own image, normal and specular maps)." << std::endl;
+    std::cout << "All of this would not be complete, however, without the skybox to surround all of it, and the ability to stop time." << std::endl;
+    std::cout << "In order to move use Z (up), S(down), Q(left) and D(right) - camera speed can be changed in the code at line 59 of game.cpp - in order to stop/resume time, press T." << std::endl;
     // to move faster
     camera.MovementSpeed *= 6;
 
@@ -86,6 +90,10 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        // to prevent double stopping time in two consecutive frames (which results in not doing anything)
+        if(stopTimeout > 0.f)
+            stopTimeout -= deltaTime;
+
         processInput(window);
 
         // step gravity and movement, with physics, and do collision detection
@@ -112,7 +120,7 @@ int main()
         for (auto object : objectList)
         {
             if(object.second)
-                object.first->draw(shader);
+                object.first->draw(shader, stop ? 0. : deltaTime);
             // only the sun needs to be super bright, and its drawn first
             shader.setVec3("light.ambient", .2f, .2f, .2f);
         }
@@ -191,8 +199,11 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS && stopTimeout <= 0.f)
+    {
+        stopTimeout = .2f;
         stop = !stop;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

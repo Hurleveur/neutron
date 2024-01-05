@@ -215,7 +215,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
 }
 
 
-void Planet::draw(Shader &planetShader)
+void Planet::draw(Shader &planetShader, double time)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
@@ -228,10 +228,16 @@ void Planet::draw(Shader &planetShader)
     // identity matrix
     mat4 model = mat4(1.0f);
 
+    // uncomment for fun mode (super rotations, but physics dont make much sense bc it isnt the true object positions)
+    //model = rotate(model, rotation.x / 2, vec3(1.f, 0.f, 0.f));
+    //model = rotate(model, rotation.y / 2, vec3(0.f, 1.f, 0.f));
+    //model = rotate(model, rotation.z / 2, vec3(0.f, 0.f, 1.f));
+
     model = translate(model, vec3(this->x, this->y, this->z));
     model = scale(model, vec3(radius));
-    
-    rotation += vec3(this->vX, this->vY, this->vZ);
+
+    if(time)
+        rotation += vec3(this->vX / 2.f, this->vY / 2.f, this->vZ / 2.f);
     model = rotate(model, rotation.x, vec3(1.f, 0.f, 0.f));
     model = rotate(model, rotation.y, vec3(0.f, 1.f, 0.f));
     model = rotate(model, rotation.z, vec3(0.f, 0.f, 1.f));
