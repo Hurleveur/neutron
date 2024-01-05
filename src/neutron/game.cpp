@@ -57,6 +57,7 @@ int main()
     std::cout << "Welcome to the solar system simulator, featuring particles within the Sun, a physics simulator including gravity and collisions with devastating effects (that is doing the simili orbits), realistic planets with Phong shaders and even normal mapping (each planet featuring their own image, normal and specular maps)." << std::endl;
     std::cout << "All of this would not be complete, however, without the skybox to surround all of it, and the ability to stop time." << std::endl;
     std::cout << "In order to move use Z (up), S(down), Q(left) and D(right) - camera speed can be changed in the code at line 59 of game.cpp - in order to stop/resume time, press T." << std::endl;
+    
     // to move faster
     camera.MovementSpeed *= 6;
 
@@ -64,9 +65,11 @@ int main()
     // skybox
     Shader skyboxShader("skybox.vs", "skybox.fs");
     makeSkybox(skyboxShader);
+    // particles
     Shader particleShader("particle.vs", "particle.fs");
     makeParticles(particleShader);
 
+    // shader for all planets
     Shader shader("shader.vs", "shader.fs");
 
     // make all planets, starting with the sun
@@ -82,7 +85,7 @@ int main()
     objectList[&mars] = true;
 
 
-    //glfwSwapInterval(0);
+    //glfwSwapInterval(0); // to remove the 60 fps limit
     float currentFrame;
     while (!glfwWindowShouldClose(window))
     {
@@ -96,28 +99,31 @@ int main()
 
         processInput(window);
 
-        // step gravity and movement, with physics, and do collision detection
+        // steps gravity and movement with physics, and do collision detection + handling
         Step(deltaTime);
 
         // render
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        // we dont need to clear GL_COLOR_BUFFER_BIT due to the skybox
+        // we don't need to clear GL_COLOR_BUFFER_BIT due to the skybox being in the background
         glClear(GL_DEPTH_BUFFER_BIT);
 
 
-        // Shader properties
+        // Shader properties for all planets and the sun
         shader.use();
         shader.setVec3("light.position", 0.f, 0.f, 0.f);
         shader.setVec3("viewPos", camera.Position);
+        // full on sunlight - will be reduced after the sun is drawn
         shader.setVec3("light.ambient", 1.f, 1.f, 1.f);
         shader.setVec3("light.diffuse", .7f, .7f, .7f);
         shader.setVec3("light.specular", .5f, .5f, .5f);
 
+        // view and projection matrix, with a depth sufficient so it doesn't crop objects - both are also multiplied here in advanced for optimisation
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        shader.setMat4("viewProjection", projection * view);
+        glm::mat4 viewProj = projection * view;
+        shader.setMat4("viewProjection", viewProj);
 
-        // render all objects (the model is calculated in the function)
+        // render all objects (model is calculated in the draw function itself)
         for (auto object : objectList)
         {
             if(object.second)
@@ -125,12 +131,12 @@ int main()
             // only the sun needs to be super bright, and its drawn first
             shader.setVec3("light.ambient", .2f, .2f, .2f);
         }
-        particleShader.use();
-        particleShader.setMat4("viewProjection", projection * view);
 
+        particleShader.use();
+        particleShader.setMat4("viewProjection", viewProj);
         drawParticles(particleShader, stop ? 0 : deltaTime);
 
-        // draw skybox as last
+        // draw skybox as last (optimisation, all depth buffer have been +- filled now)
         drawSkybox(skyboxShader, view, projection);
 
         glfwSwapBuffers(window);
@@ -250,27 +256,33 @@ void Step(double time)
 {
     if (stop)
         return;
+
+    // gravitational constant
     static const double gravitational = 6.674 / 100000000000;
+    // apply gravity
+    // auto is Planet, bool, where the bool states if the objects are active -
+    // they get turned off when they have collided with the sun, in which case they are to be ignored
     for (auto object : objectList)
     {
+        // all objects get pull from other objects - except themselves and disabled objects
         for (auto otherObject : objectList)
         {
-            // don't consider disabled objects
-            // the sun wont be affected by the earth and the earth wont be by the moon or by other same weight planets - for simplicity, and optimisation
+            // the sun and other bigger objects wont be affected by the earth and the earth wont be by the moon or by other same weight planets - for simplicity, and optimisation
             if (!object.second || !otherObject.second || otherObject.first->mass <= object.first->mass)
                 continue;
             double distance = object.first->DistanceFrom(*otherObject.first);
-            // the earth should have a pull much stronger on the moon, because its supposed to be much closer (but we wouldn't see anything if it was real scale)
+            // hack: the earth should have a pull much stronger on the moon, because its supposed to be much closer (but we wouldn't see anything if it was real scale)
             if (object.first->mass * otherObject.first->mass == EARTH_MOON_MASS)
                 distance /= 100;
+
             double pull = otherObject.first->mass * gravitational / (distance * distance) * time;
             object.first->vX += pull * ((otherObject.first->x > object.first->x) ? 1 : -1);
             object.first->vY += pull * ((otherObject.first->y > object.first->y) ? 1 : -1);
             object.first->vZ += pull * ((otherObject.first->z > object.first->z) ? 1 : -1);
         }
     }
-    for (auto object : objectList)
-        object.first->Tick(time);
+
+    // check for collisions and handle them
     for (auto object : objectList)
     {
         if (!object.second)
@@ -307,5 +319,8 @@ void Step(double time)
                 }
             }
     }
-    return;
+
+    // move all objects
+    for (auto object : objectList)
+        object.first->Tick(time);
 }
