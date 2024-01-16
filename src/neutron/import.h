@@ -1,3 +1,5 @@
+#pragma once
+
 #include <glm/glm.hpp>
 #include <vector>
 #include <cmath>
@@ -7,7 +9,6 @@
 // This file creates and then manages objects, with the help of particle_generator.h in the case of particles, and planet.h to generate spheres.
 // texure.h is also used to import textures.
 
-#pragma once
 class Shader;
 // Skybox management.
 void makeSkybox(Shader &skyboxShader);

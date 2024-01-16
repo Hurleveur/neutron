@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
 #include <cmath>
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
@@ -141,9 +142,9 @@ void generateSphere(float radius, int sectorCount, int stackCount,
 
 
 
-GLuint generateMipmappedTexture(const char* imagePath) {
+GLuint generateMipmappedTexture(const std::string_view& imagePath) {
     int width, height, nrChannels;
-    unsigned char* data = stbi_load(imagePath, &width, &height, &nrChannels, 4);
+    unsigned char* data = stbi_load(imagePath.data(), &width, &height, &nrChannels, 4);
     if (!data) {
         cerr << "Failed to load texture: " << imagePath << endl;
         return 0;
@@ -168,9 +169,9 @@ GLuint generateMipmappedTexture(const char* imagePath) {
     return textureID;
 }
 
-GLuint loadNormalMap(const char* imagePath) {
+GLuint loadNormalMap(const std::string_view& imagePath) {
     int width, height, nrChannels;
-    unsigned char* data = stbi_load(imagePath, &width, &height, &nrChannels, 4);
+    unsigned char* data = stbi_load(imagePath.data(), &width, &height, &nrChannels, 4);
 
     if (!data) {
         cerr << "Failed to load normal map: " << imagePath << endl;

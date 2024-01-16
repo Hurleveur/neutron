@@ -63,14 +63,14 @@ int main()
 
     // make shaders and objects, with VBO and VAO
     // skybox
-    Shader skyboxShader("skybox.vs", "skybox.fs");
+    Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
     makeSkybox(skyboxShader);
     // particles
-    Shader particleShader("particle.vs", "particle.fs");
+    Shader particleShader("shaders/particle.vs", "shaders/particle.fs");
     makeParticles(particleShader);
 
     // shader for all planets
-    Shader shader("shader.vs", "shader.fs");
+    Shader shader("shaders/shader.vs", "shaders/shader.fs");
 
     // make all planets, starting with the sun
     Planet sun(SUN_MASS, 5, 0, 0, 0, 0, 0, 0, shader, Sun);
