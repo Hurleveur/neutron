@@ -3,7 +3,6 @@
 #include "planet.h"
 #include "particle_generator.h"
 
-#include <learnopengl/filesystem.h>
 #include <glad/glad.h>
 #include <learnopengl/shader.h>
 #include <glm/glm.hpp>
@@ -78,12 +77,12 @@ void makeSkybox(Shader &skyboxShader)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     std::vector<std::string> faces
     {
-        FileSystem::getPath("resources/textures/skybox/skybox_left.png"),
-        FileSystem::getPath("resources/textures/skybox/skybox_right.png"),
-        FileSystem::getPath("resources/textures/skybox/skybox_up.png"),
-        FileSystem::getPath("resources/textures/skybox/skybox_down.png"),
-        FileSystem::getPath("resources/textures/skybox/skybox_front.png"),
-        FileSystem::getPath("resources/textures/skybox/skybox_back.png")
+        "textures/skybox/skybox_left.png",
+        "textures/skybox/skybox_right.png",
+        "textures/skybox/skybox_up.png",
+        "textures/skybox/skybox_down.png",
+        "textures/skybox/skybox_front.png",
+        "textures/skybox/skybox_back.png"
     };
     cubemapTexture = loadCubemap(faces);
 
@@ -111,7 +110,7 @@ void makeParticles(Shader& particleShader) {
     particleShader.use();
     particleShader.setInt("particle", 0);
     // make 100 of them to start with
-    Particles = new ParticleGenerator(generateMipmappedTexture(FileSystem::getPath("resources/textures/particles.png").c_str()), 200);
+    Particles = new ParticleGenerator(generateMipmappedTexture("textures/particles.png"), 200);
 }
 
 void drawParticles(Shader& particleShader, float deltaTime) {
@@ -152,30 +151,30 @@ void Planet::makePlanet(Shader& planetShader, int image)
     std::string name;
     switch (image) {
         case Sun:
-            textureFile = "resources/textures/planets/sun/";
+            textureFile = "textures/planets/sun/";
             name = "sun.jpg";
             break;
         case Moon:
-            textureFile = "resources/textures/planets/moon/";
+            textureFile = "textures/planets/moon/";
             name = "moon.bmp";
             break;
         case Mercury:
-            textureFile = "resources/textures/planets/mercury/";
+            textureFile = "textures/planets/mercury/";
             name = "mercury.png";
             break;
         case Mars:
-            textureFile = "resources/textures/planets/mars/";
+            textureFile = "textures/planets/mars/";
             name = "mars.png";
             break;
         case Earth:
         default:
-            textureFile = "resources/textures/planets/earth/";
+            textureFile = "textures/planets/earth/";
             name = "earth.jpg";
             break;
     }
-    planetTextureID = generateMipmappedTexture(FileSystem::getPath(textureFile + name).c_str());
-    normalMapID = loadNormalMap(FileSystem::getPath(textureFile + "norm.png").c_str());
-    specMapID = loadNormalMap(FileSystem::getPath(textureFile + "spec.png").c_str());
+    planetTextureID = generateMipmappedTexture(textureFile + name);
+    normalMapID = loadNormalMap(textureFile + "norm.png");
+    specMapID = loadNormalMap(textureFile + "spec.png");
 
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
