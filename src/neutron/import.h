@@ -1,10 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <vector>
-#include <cmath>
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 
 // This file creates and then manages objects, with the help of particle_generator.h in the case of particles, and planet.h to generate spheres.
 // texure.h is also used to import textures.
@@ -12,29 +9,29 @@
 class Shader;
 // Skybox management.
 void makeSkybox(Shader &skyboxShader);
-void drawSkybox(Shader &skyboxShader, glm::mat4 &view, glm::mat4 &projection);
+void drawSkybox(Shader &skyboxShader, const glm::mat4 &view, const glm::mat4 &projection);
 // Particles management.
 void makeParticles(Shader &particleShader);
 void drawParticles(Shader &particleShader, float deltaTime);
 
-// For each planet, that have corresponding textures.
-enum Planets {
-    Sun,
-    Earth,
-    Moon,
-	Mars,
-	Mercury,
-};
-
-
 class Planet {
 public:
-	Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, int image);
+	// For each planet, that have corresponding textures.
+	enum class Type
+	{
+		Sun,
+		Earth,
+		Moon,
+		Mars,
+		Mercury,
+	};
+
+	Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, Type type);
 
 	void Tick(double time);
-	double DistanceFrom(const Planet& object) const;
-	void makePlanet(Shader& planetShader, int image);
-	void draw(Shader& planetShader, double time);
+	float DistanceFrom(const Planet& object) const;
+	void makePlanet(const Shader& planetShader, Type type);
+	void draw(const Shader& planetShader, double time);
 
 public:
 	int mass = 100;

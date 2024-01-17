@@ -10,9 +10,7 @@
 
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
-#include <learnopengl/model.h>
 #include <iostream>
-#include <vector>
 #include <map>
 
 // utility functions
@@ -20,8 +18,6 @@ void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
-unsigned int loadTexture(const char* path);
-unsigned int loadCubemap(vector<std::string> faces);
 GLFWwindow* init();
 void Step(double time);
 
@@ -73,15 +69,15 @@ int main()
     Shader shader("shaders/shader.vs", "shaders/shader.fs");
 
     // make all planets, starting with the sun
-    Planet sun(SUN_MASS, 5, 0, 0, 0, 0, 0, 0, shader, Sun);
+    Planet sun(SUN_MASS, 5, 0, 0, 0, 0, 0, 0, shader, Planet::Type::Sun);
     objectList[&sun] = true;
-    Planet mercury(90, .5, 1.5, -30, 0, 0.0004, 0.00015, 0, shader, Mercury);
+    Planet mercury(90, .5, 1.5, -30, 0, 0.0004, 0.00015, 0, shader, Planet::Type::Mercury);
     objectList[&mercury] = true;
-    Planet earth(100, 1, 50, 0, 0, 0.0001, 0.0003, 0, shader, Earth);
+    Planet earth(100, 1, 50, 0, 0, 0.0001, 0.0003, 0, shader, Planet::Type::Earth);
     objectList[&earth] = true;
-    Planet moon(1, .2, 51.5, -1.5, 0, 0.0001, 0.0003 + 0.00008, 0, shader, Moon);
+    Planet moon(1, .2, 51.5, -1.5, 0, 0.0001, 0.0003 + 0.00008, 0, shader, Planet::Type::Moon);
     objectList[&moon] = true;
-    Planet mars(60, .8, 1.5, -80, 0, -0.0005, 0.00004, 0, shader, Mars);
+    Planet mars(60, .8, 1.5, -80, 0, -0.0005, 0.00004, 0, shader, Planet::Type::Mars);
     objectList[&mars] = true;
 
 
@@ -103,7 +99,7 @@ int main()
         Step(deltaTime);
 
         // render
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+//        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         // we don't need to clear GL_COLOR_BUFFER_BIT due to the skybox being in the background
         glClear(GL_DEPTH_BUFFER_BIT);
 
