@@ -7,7 +7,6 @@ layout (location = 3) in vec3 aTangent;
 out vec3 FragPos;
 out vec2 TexCoords;
 out mat3 TBN;
-out vec3 TANGENT;
 
 uniform mat4 model;
 uniform mat4 viewProjection;
@@ -21,10 +20,10 @@ void main()
     gl_Position = viewProjection * vec4(FragPos, 1.0);
     TexCoords = aTexCoords;
     
-    mat3 normalMatrix = mat3(model);
-    vec3 N = normalize(normalMatrix * aNormal);
-    vec3 T = normalize(normalMatrix * aTangent);
-    vec3 B = cross(T, N);
+    mat3 model_to_world_matrix = mat3(model);
+    vec3 N = normalize(model_to_world_matrix * aNormal);
+    vec3 T = normalize(model_to_world_matrix * aTangent);
+    vec3 B = cross(N, T);
 
     TBN = transpose(mat3(T, B, N));
 }

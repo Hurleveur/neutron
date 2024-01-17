@@ -18,7 +18,7 @@ std::vector<glm::vec3> vertices;
 std::vector<glm::vec3> normals;
 std::vector<glm::vec2> texCoords;
 std::vector<glm::vec3> tangents;
-std::vector<unsigned int> indices;
+std::vector<Triangle> triangles;
 
 constexpr float skyboxVertices[] = {
     // positions
@@ -187,7 +187,7 @@ void Planet::makePlanet(const Shader& planetShader, Type type)
 
     // generate a sphere once and then use it for all VBO and VAO
     if (vertices.empty())
-        generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, indices, tangents);
+        generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, triangles, tangents);
 
     glGenBuffers(4, VBO);
 
@@ -251,5 +251,5 @@ void Planet::draw(const Shader& planetShader, double time)
 
     planetShader.setMat4("model", model);
     // Render the sphere
-    glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, indices.data());
+    glDrawElements(GL_TRIANGLES, (uint32_t)(triangles.size() * sizeof(Triangle)), GL_UNSIGNED_INT, triangles.data());
 }

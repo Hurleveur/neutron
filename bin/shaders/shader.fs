@@ -24,7 +24,7 @@ uniform Light light;
 
 void main()
 {
-    vec3 tangent_space_normal = normalize(texture2D(material.normal, TexCoords).rgb * 2.0 - 1.0);
+    vec3 tangent_space_normal = texture2D(material.normal, TexCoords).rgb * 2.0 - 1.0;
 //    normal.y = -normal.y;
     vec3 tangent_space_light_direction = TBN * normalize(light.position - FragPos);
 
