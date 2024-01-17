@@ -22,22 +22,23 @@ uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
 
-void main() {
-    vec3 normal = normalize(texture2D(material.normal,TexCoords).rgb * 2.0 - 1.0);
-    normal = normalize(TBN * normal);
-    vec3 lightDir = normalize(light.position - FragPos);
+void main()
+{
+    vec3 tangent_space_normal = normalize(texture2D(material.normal, TexCoords).rgb * 2.0 - 1.0);
+//    normal.y = -normal.y;
+    vec3 tangent_space_light_direction = TBN * normalize(light.position - FragPos);
 
-    vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb;
-
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords).rgb;
+    float diffuse = dot(tangent_space_normal, tangent_space_light_direction);
+//    vec3 diffuse = texture(material.diffuse, TexCoords).rgb;
+//    diffuse *= light.diffuse * diff;
 
     // specular
-    vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
+//    vec3 viewDir = normalize(viewPos - FragPos);
+//    vec3 reflectDir = reflect(-lightDir, normal);
     // use default shininess
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4.0);
-    vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
+//    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4.0);
+//    vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
-    FragColor = vec4((ambient + diffuse + specular), 1.0);
+//    FragColor = vec4((ambient + diffuse + specular), 1.0);
+    FragColor = vec4(diffuse, diffuse, diffuse, 1.0);
 }

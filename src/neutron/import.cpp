@@ -11,9 +11,13 @@
 
 using namespace glm;
 
+// TODO: put this inside a PlanetFactory class, instead of this being in global scope, which is BAAAAD :(
 int sectorCount = 36;
 int stackCount = 18;
-std::vector<float> vertices, normals, texCoords, tangents;
+std::vector<glm::vec3> vertices;
+std::vector<glm::vec3> normals;
+std::vector<glm::vec2> texCoords;
+std::vector<glm::vec3> tangents;
 std::vector<unsigned int> indices;
 
 constexpr float skyboxVertices[] = {
@@ -90,7 +94,7 @@ void makeSkybox(Shader &skyboxShader)
     skyboxShader.setInt("skybox", 0);
 }
 
-void drawSkybox(Shader &skyboxShader, mat4 &view, mat4 &projection)
+void drawSkybox(Shader &skyboxShader, const mat4 &view, const mat4 &projection)
 {
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     skyboxShader.use();
@@ -129,44 +133,46 @@ void Planet::Tick(double time) {
 }
 
 
-double Planet::DistanceFrom(const Planet& object) const
+float Planet::DistanceFrom(const Planet& object) const
 {
     return std::sqrt(
-        (object.x - x) * (object.x - x) +
-        (object.y - y) * (object.y - y) +
-        (object.z - z) * (object.z - z)
+        std::fabs( // TODO: does this actually do anything?
+            (object.x - x) * (object.x - x) +
+            (object.y - y) * (object.y - y) +
+            (object.z - z) * (object.z - z)
+        )
     );
 }
 
 
-Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, int image) :
+Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY, double speedZ, Shader& planetShader, Type type) :
     mass(mass), radius(radius), x(posX), y(posY), z(posZ), vX(speedX), vY(speedY), vZ(speedZ)
 {
-    this->makePlanet(planetShader, image);
+    makePlanet(planetShader, type);
 };
 
-void Planet::makePlanet(Shader& planetShader, int image)
+void Planet::makePlanet(const Shader& planetShader, Type type)
 {
     std::string textureFile;
     std::string name;
-    switch (image) {
-        case Sun:
+    switch (type) {
+        case Type::Sun:
             textureFile = "textures/planets/sun/";
             name = "sun.jpg";
             break;
-        case Moon:
+        case Type::Moon:
             textureFile = "textures/planets/moon/";
             name = "moon.bmp";
             break;
-        case Mercury:
+        case Type::Mercury:
             textureFile = "textures/planets/mercury/";
             name = "mercury.png";
             break;
-        case Mars:
+        case Type::Mars:
             textureFile = "textures/planets/mars/";
             name = "mars.png";
             break;
-        case Earth:
+        case Type::Earth:
         default:
             textureFile = "textures/planets/earth/";
             name = "earth.jpg";
@@ -187,23 +193,23 @@ void Planet::makePlanet(Shader& planetShader, int image)
 
     // Bind and set vertex data (position, normal, texture coordinates and tangents)
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(float), texCoords.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
-    glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(float), tangents.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+    glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(glm::vec3), tangents.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(3);
     glBindVertexArray(0);
 
@@ -215,7 +221,7 @@ void Planet::makePlanet(Shader& planetShader, int image)
 }
 
 
-void Planet::draw(Shader &planetShader, double time)
+void Planet::draw(const Shader& planetShader, double time)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);

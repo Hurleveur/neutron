@@ -7,6 +7,7 @@ layout (location = 3) in vec3 aTangent;
 out vec3 FragPos;
 out vec2 TexCoords;
 out mat3 TBN;
+out vec3 TANGENT;
 
 uniform mat4 model;
 uniform mat4 viewProjection;
@@ -21,9 +22,9 @@ void main()
     TexCoords = aTexCoords;
     
     mat3 normalMatrix = mat3(model);
-    vec3 T = normalize(normalMatrix * aTangent);
     vec3 N = normalize(normalMatrix * aNormal);
-    vec3 B = cross(N, T);
+    vec3 T = normalize(normalMatrix * aTangent);
+    vec3 B = cross(T, N);
 
-    TBN = mat3(T, B, N);
+    TBN = transpose(mat3(T, B, N));
 }

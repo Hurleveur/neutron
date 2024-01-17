@@ -14,7 +14,7 @@
 using namespace std;
 
 
-const float PI = acos(-1.0f);
+constexpr float PI = std::acos(-1.0f);
 
 
 using glm::vec2;
@@ -23,9 +23,8 @@ using glm::vec4;
 
 void makeTangents(uint32_t nIndices, uint32_t* indices,
     const vec3* positions, const vec3* normals,
-    const vec2* texCoords, vec4* tangents) {
+    const vec2* texCoords, vec3* tangents) {
     uint32_t inconsistentUvs = 0;
-    for (uint32_t l = 0; l < nIndices; ++l) tangents[indices[l]] = vec4(0);
     for (uint32_t l = 0; l < nIndices; ++l) {
         uint32_t i = indices[l];
         uint32_t j = indices[(l + 1) % 3 + l / 3 * 3];
@@ -39,9 +38,6 @@ void makeTangents(uint32_t nIndices, uint32_t* indices,
         if (std::abs(uv2xArea) < 0x1p-20)
             continue;  // Smaller than 1/2 pixel at 1024x1024
         float flip = uv2xArea > 0 ? 1 : -1;
-        // 'flip' or '-flip'; depends on the handedness of the space.
-        if (tangents[i].w != 0 && tangents[i].w != -flip) ++inconsistentUvs;
-        tangents[i].w = -flip;
 
         // Project triangle onto tangent plane
         v1 -= n * dot(v1, n);
@@ -51,24 +47,26 @@ void makeTangents(uint32_t nIndices, uint32_t* indices,
 
         // Use angle between projected v1 and v2 as weight
         float angle = std::acos(dot(v1, v2) / (length(v1) * length(v2)));
-        tangents[i] += vec4(s * angle, 0);
+        tangents[i] += s * angle;
     }
     for (uint32_t l = 0; l < nIndices; ++l) {
-        vec4& t = tangents[indices[l]];
-        t = vec4(normalize(vec3(t.x, t.y, t.z)), t.w);
+        vec3& t = tangents[indices[l]];
+        t = normalize(t);
     }
-    // std::cerr << inconsistentUvs << " inconsistent UVs\n";
+//    std::cerr << inconsistentUvs << " inconsistent UVs\n";
 }
-
 
 // Function to generate sphere geometry comes from https://www.songho.ca/opengl/gl_sphere.html
 void generateSphere(float radius, int sectorCount, int stackCount,
-                    vector<float>& vertices, vector<float>& normals, vector<float>& texCoords, vector<unsigned int>& indices, vector<float>& tangents) {
+    vector<glm::vec3>& vertices, vector<glm::vec3>& normals,
+    vector<glm::vec2>& texCoords, vector<unsigned int>& indices, vector<glm::vec3>& tangents) {
     // clear memory of prev arrays
-    vector<float>().swap(vertices);
-    vector<float>().swap(normals);
-    vector<float>().swap(texCoords);
-    vector<unsigned int>().swap(indices);
+    // TODO: this is really bad, we need to move this to a PlanetFactory class!!!
+    vertices.clear();
+    normals.clear();
+    texCoords.clear();
+    indices.clear();
+    tangents.clear();
 
     float x, y, z, xy;                              // vertex position
     float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -92,23 +90,18 @@ void generateSphere(float radius, int sectorCount, int stackCount,
             // vertex position (x, y, z)
             x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
             y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
-            vertices.push_back(x);
-            vertices.push_back(y);
-            vertices.push_back(z);
+            vertices.push_back(glm::vec3(x, y, z));
 
             // normalized vertex normal (nx, ny, nz)
             nx = x * lengthInv;
             ny = y * lengthInv;
             nz = z * lengthInv;
-            normals.push_back(nx);
-            normals.push_back(ny);
-            normals.push_back(nz);
+            normals.push_back(glm::vec3(nx, ny, nz));
 
             // vertex tex coord (s, t) range between [0, 1]
             s = (float)j / sectorCount;
             t = (float)i / stackCount;
-            texCoords.push_back(s);
-            texCoords.push_back(t);
+            texCoords.push_back(glm::vec2(s, t));
         }
     }
 
@@ -136,7 +129,8 @@ void generateSphere(float radius, int sectorCount, int stackCount,
         }
     }
     tangents.resize(indices.size());
-    makeTangents(indices.size(), indices.data(), (glm::vec3*)(vertices.data()), (glm::vec3*)(normals.data()), (glm::vec2*)(texCoords.data()), (glm::vec4*)tangents.data());
+    makeTangents(indices.size(), indices.data(),
+        vertices.data(), normals.data(), texCoords.data(), tangents.data());
 }
 
 
