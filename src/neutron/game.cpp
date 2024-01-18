@@ -12,6 +12,9 @@
 #include <learnopengl/camera.h>
 #include <iostream>
 #include <map>
+#include <span>
+#include <istream>
+#include <fstream>
 
 // utility functions
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
@@ -21,9 +24,10 @@ void processInput(GLFWwindow* window);
 GLFWwindow* init();
 void Step(double time);
 
+// TODO: put all of this inside a GameState class
 // window settings
-const unsigned int SCR_WIDTH = 1200;
-const unsigned int SCR_HEIGHT = 900;
+const unsigned int SCR_WIDTH = 1600;
+const unsigned int SCR_HEIGHT = 1200;
 
 constexpr int EARTH_MOON_MASS = 100;
 constexpr int SUN_MASS = 100000000;
@@ -40,15 +44,154 @@ float lastFrame = 0.0f;
 bool stop = false;
 float stopTimeout = 0.0f;
 
+class Window {
+    GLFWwindow* glfw_window;
+
+public:
+    Window() {
+        // setup all GLFW and enable opengl
+        glfwInit();
+        // use version 3
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        // setup profile
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+        glfw_window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "neutron", nullptr, nullptr);
+        if (!glfw_window)
+            throw std::runtime_error("Failed to create GLFW window.");
+
+        glfwMakeContextCurrent(glfw_window);
+        glfwSetFramebufferSizeCallback(glfw_window, framebuffer_size_callback);
+        glfwSetCursorPosCallback(glfw_window, mouse_callback);
+        glfwSetScrollCallback(glfw_window, scroll_callback);
+
+        // tell GLFW to capture our mouse
+        glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+        // glad: load all OpenGL function pointers
+        // ---------------------------------------
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+            throw std::runtime_error("Failed to initialize GLAD.");
+
+        // configure global opengl state
+        glEnable(GL_DEPTH_TEST);
+//        glEnable(GL_CULL_FACE);
+//        glFrontFace(GL_CCW);
+    }
+
+    ~Window() {
+        glfwTerminate();
+    }
+
+    bool ShouldClose() const {
+        return glfwWindowShouldClose(glfw_window);
+    }
+
+    void PaintAndPoll() const {
+        glfwSwapBuffers(glfw_window);
+        glfwPollEvents();
+    }
+
+    // TODO: this breaks encapsulation, get rid of this
+    GLFWwindow* GetGLFWWindow() const {
+        return glfw_window;
+    }
+};
+
 // the objects and if they should be rendered
 std::map<Planet*, bool> objectList;
 
+struct VertexFormat {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec3 tangent;
+    glm::vec2 texcoord;
+};
+
+class Model {
+    GLuint VAO;
+    GLuint VBO;
+    GLuint EBO;
+    uint32_t vertex_index_count;
+
+public:
+    Model(const std::span<const VertexFormat>& vertices, const std::span<const uint16_t>& vertex_indices):
+        VAO(0), VBO(0), EBO(0), vertex_index_count(vertex_indices.size()) {
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+
+        glBindVertexArray(VAO);
+
+        // fill vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, (uint32_t)vertices.size_bytes(), vertices.data(), GL_STATIC_DRAW);
+
+        // fill index buffer
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (uint32_t)vertex_indices.size_bytes(), vertex_indices.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)offsetof(VertexFormat, position));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)offsetof(VertexFormat, normal));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)offsetof(VertexFormat, tangent));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)offsetof(VertexFormat, texcoord));
+
+        glBindVertexArray(0);
+    }
+
+    ~Model() {
+        glDeleteBuffers(1, &EBO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteVertexArrays(1, &VAO);
+    }
+
+    void Set() {
+        glBindVertexArray(VAO);
+    }
+
+    void Draw() {
+        glDrawElements(GL_TRIANGLES, vertex_index_count, GL_UNSIGNED_SHORT, (void*)0);
+    }
+
+    void Unset() {
+        glBindVertexArray(0);
+    }
+};
+
+// factory function that creates a Model given a file path to a MDL file
+Model CreateModelFromFile(const std::string_view& file_path) {
+    std::ifstream mdl_file(file_path.data());
+    if (!mdl_file.is_open())
+        throw std::runtime_error("Failed to open an MDL file for reading.");
+
+    // read vertices
+    uint32_t vertex_count;
+    mdl_file.read((char*)&vertex_count, sizeof(uint32_t));
+    std::vector<VertexFormat> vertices;
+    vertices.resize(vertex_count);
+    mdl_file.read((char*)vertices.data(), vertex_count * sizeof(VertexFormat));
+
+    // read corner indices
+    uint32_t vertex_index_count;
+    mdl_file.read((char*)&vertex_index_count, sizeof(uint32_t));
+    std::vector<uint16_t> vertex_indices;
+    vertex_indices.resize(vertex_index_count);
+    mdl_file.read((char*)vertex_indices.data(), vertex_index_count * sizeof(uint16_t));
+
+    return {vertices, vertex_indices};
+}
+
 int main()
 {
-    // setup all GLFW and enable opengl
-    GLFWwindow* window = init();
-    if (!window)
-        return -1;
+    Window window;
     
     std::cout << "Welcome to the solar system simulator, featuring particles within the Sun, a physics simulator including gravity and collisions with devastating effects (that is doing the simili orbits), realistic planets with Phong shaders and even normal mapping (each planet featuring their own image, normal and specular maps)." << std::endl;
     std::cout << "All of this would not be complete, however, without the skybox to surround all of it, and the ability to stop time." << std::endl;
@@ -68,6 +211,9 @@ int main()
     // shader for all planets
     Shader shader("shaders/shader.vs", "shaders/shader.fs");
 
+    // crate the sphere model once, and reuse it for every planet
+    Model planet_model = CreateModelFromFile("models/sphere.mdl");
+
     // make all planets, starting with the sun
     Planet sun(SUN_MASS, 5, 0, 0, 0, 0, 0, 0, shader, Planet::Type::Sun);
     objectList[&sun] = true;
@@ -80,10 +226,9 @@ int main()
     Planet mars(60, .8, 1.5, -80, 0, -0.0005, 0.00004, 0, shader, Planet::Type::Mars);
     objectList[&mars] = true;
 
-
     //glfwSwapInterval(0); // to remove the 60 fps limit
     float currentFrame;
-    while (!glfwWindowShouldClose(window))
+    while (!window.ShouldClose())
     {
         currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -93,16 +238,13 @@ int main()
         if(stopTimeout > 0.f)
             stopTimeout -= deltaTime;
 
-        processInput(window);
+        processInput(window.GetGLFWWindow());
 
         // steps gravity and movement with physics, and do collision detection + handling
         Step(deltaTime);
 
-        // render
-//        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         // we don't need to clear GL_COLOR_BUFFER_BIT due to the skybox being in the background
         glClear(GL_DEPTH_BUFFER_BIT);
-
 
         // Shader properties for all planets and the sun
         shader.use();
@@ -117,73 +259,34 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 viewProj = projection * view;
-        shader.setMat4("viewProjection", viewProj);
+        shader.setMat4("view_projection_matrix", viewProj);
 
         // render all objects (model is calculated in the draw function itself)
+        planet_model.Set(); // TODO: encapsulate inside a PlanetRenderer class
         for (auto object : objectList)
         {
             if(object.second)
-                object.first->draw(shader, stop ? 0. : deltaTime);
+                object.first->SetShaderVariables(shader, stop ? 0. : deltaTime);
+            planet_model.Draw();
+
             // only the sun needs to be super bright, and its drawn first
             shader.setVec3("light.ambient", .2f, .2f, .2f);
         }
+        planet_model.Unset(); // TODO: encapsulate inside a PlanetRenderer class
 
+        glDisable(GL_CULL_FACE);
         particleShader.use();
-        particleShader.setMat4("viewProjection", viewProj);
+        particleShader.setMat4("view_projection_matrix", viewProj);
         drawParticles(particleShader, stop ? 0 : deltaTime);
+        glEnable(GL_CULL_FACE);
 
         // draw skybox as last (optimisation, all depth buffer have been +- filled now)
         drawSkybox(skyboxShader, view, projection);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        window.PaintAndPoll();
     }
 
-    glfwTerminate();
     return 0;
-}
-
-
-
-GLFWwindow* init() {
-    glfwInit();
-    // use version 3
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    // setup profile
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "neutron", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return nullptr;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-
-    // tell GLFW to capture our mouse
-//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return nullptr;
-    }
-
-    // configure global opengl state
-    glEnable(GL_DEPTH_TEST);
-
-    return window;
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly

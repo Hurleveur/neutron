@@ -31,7 +31,7 @@ public:
 	void Tick(double time);
 	float DistanceFrom(const Planet& object) const;
 	void makePlanet(const Shader& planetShader, Type type);
-	void draw(const Shader& planetShader, double time);
+	void SetShaderVariables(const Shader& planetShader, double time);
 
 public:
 	int mass = 100;
@@ -42,7 +42,7 @@ public:
 	double vX;
 	double vY;
 	double vZ;
-	glm::vec3 rotation = {1.f, 1.f, 1.f};
+	glm::vec3 rotation = {0.f, 0.f, 0.f};
 
-	GLuint VAO, VBO[4], planetTextureID, normalMapID, specMapID;
+	GLuint planetTextureID, normalMapID, specMapID;
 };

@@ -18,27 +18,27 @@ struct Light {
     vec3 specular;
 };
 
-uniform vec3 viewPos;
+uniform vec3 viewPos; // this is the camera position technically, so TODO rename that
 uniform Material material;
-uniform Light light;
+uniform Light light; // TODO: no need for this technically
 
 void main()
 {
-    vec3 tangent_space_normal = texture2D(material.normal, TexCoords).rgb * 2.0 - 1.0;
-//    normal.y = -normal.y;
-    vec3 tangent_space_light_direction = TBN * normalize(light.position - FragPos);
+    vec3 tangent_space_normal = normalize(texture2D(material.normal, TexCoords).rgb * 2.0 - 1.0);
+    vec3 lightDir = normalize(light.position - FragPos);
+    vec3 tangent_space_light_direction = TBN * lightDir;
 
-    float diffuse = dot(tangent_space_normal, tangent_space_light_direction);
-//    vec3 diffuse = texture(material.diffuse, TexCoords).rgb;
-//    diffuse *= light.diffuse * diff;
+    // fake Oren-Nayar diffuse attenuation
+    float light_intensity = pow(dot(tangent_space_normal, tangent_space_light_direction), 0.8);
+    vec3 diffuse = light_intensity * texture(material.diffuse, TexCoords).rgb;
 
     // specular
-//    vec3 viewDir = normalize(viewPos - FragPos);
-//    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 viewDir = TBN * normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-tangent_space_light_direction, tangent_space_normal);
     // use default shininess
-//    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4.0);
-//    vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4.0);
+    vec3 specular = spec * texture(material.specular, TexCoords).rgb;
 
 //    FragColor = vec4((ambient + diffuse + specular), 1.0);
-    FragColor = vec4(diffuse, diffuse, diffuse, 1.0);
+    FragColor = vec4(diffuse + specular, 1.0);
 }

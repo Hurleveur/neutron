@@ -11,15 +11,6 @@
 
 using namespace glm;
 
-// TODO: put this inside a PlanetFactory class, instead of this being in global scope, which is BAAAAD :(
-int sectorCount = 36;
-int stackCount = 18;
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec3> normals;
-std::vector<glm::vec2> texCoords;
-std::vector<glm::vec3> tangents;
-std::vector<Triangle> triangles;
-
 constexpr float skyboxVertices[] = {
     // positions
     -1.0f,  1.0f, -1.0f,
@@ -98,8 +89,7 @@ void drawSkybox(Shader &skyboxShader, const mat4 &view, const mat4 &projection)
 {
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     skyboxShader.use();
-    skyboxShader.setMat4("view", mat3(view));
-    skyboxShader.setMat4("projection", projection);
+    skyboxShader.setMat4("view_projection_matrix", mat3(projection * view));
     // skybox cube
     glBindVertexArray(skyboxVAO);
     glActiveTexture(GL_TEXTURE0);
@@ -162,7 +152,7 @@ void Planet::makePlanet(const Shader& planetShader, Type type)
             break;
         case Type::Moon:
             textureFile = "textures/planets/moon/";
-            name = "moon.bmp";
+            name = "moon.jpg";
             break;
         case Type::Mercury:
             textureFile = "textures/planets/mercury/";
@@ -182,37 +172,6 @@ void Planet::makePlanet(const Shader& planetShader, Type type)
     normalMapID = loadNormalMap(textureFile + "norm.png");
     specMapID = loadNormalMap(textureFile + "spec.png");
 
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    // generate a sphere once and then use it for all VBO and VAO
-    if (vertices.empty())
-        generateSphere(1.0f, sectorCount, stackCount, vertices, normals, texCoords, triangles, tangents);
-
-    glGenBuffers(4, VBO);
-
-    // Bind and set vertex data (position, normal, texture coordinates and tangents)
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
-    glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(glm::vec3), tangents.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(3);
-    glBindVertexArray(0);
-
     planetShader.use();
     //planetShader.setInt(texture, 0);
     planetShader.setInt("material.diffuse", 0);
@@ -221,7 +180,7 @@ void Planet::makePlanet(const Shader& planetShader, Type type)
 }
 
 
-void Planet::draw(const Shader& planetShader, double time)
+void Planet::SetShaderVariables(const Shader& planetShader, double time)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, planetTextureID);
@@ -229,7 +188,6 @@ void Planet::draw(const Shader& planetShader, double time)
     glBindTexture(GL_TEXTURE_2D, normalMapID);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, specMapID);
-    glBindVertexArray(VAO);
 
     // identity matrix
     mat4 model = mat4(1.0f);
@@ -247,9 +205,5 @@ void Planet::draw(const Shader& planetShader, double time)
     model = rotate(model, rotation.x, vec3(1.f, 0.f, 0.f));
     model = rotate(model, rotation.y, vec3(0.f, 1.f, 0.f));
     model = rotate(model, rotation.z, vec3(0.f, 0.f, 1.f));
-    
-
-    planetShader.setMat4("model", model);
-    // Render the sphere
-    glDrawElements(GL_TRIANGLES, (uint32_t)(triangles.size() * sizeof(Triangle)), GL_UNSIGNED_INT, triangles.data());
+    planetShader.setMat4("model_to_world_matrix", model);
 }
