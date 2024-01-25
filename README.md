@@ -1,15 +1,22 @@
 # Neutron
-A solar system written in C++17 using OpenGL.
+A solar system written in C++20 using OpenGL.
 
-## Libraries list & Credits
-The project includes the following libs (`/lib` directory): assimp.lib, freetype.lib, glew32s.lib, glfw3.lib, irrKlang.lib, SOIL.lib
-And the following (pre-)compiled for windows dlls (`/dlls` directory): assimp-vc140-mt.dll, ikpMP3.dll, irrKlang.dll
-And some utility scripts from [LearnOpenGL](https://learnopengl.com), a function from [Songho OpenGL Sphere](https://www.songho.ca/opengl/gl_sphere.html) and another from [StackOverflow](www.stackoverflow.com/questions/5255806) allowing to generate spheres with tangents.
+## Architecture
+While still a work-in-progress, the game and engine architecture is a combination of modern C++ techniques straight from the ISO C++ guidelines
+and recommendations. First of all, the codebase is organized in a header-only fashion, which makes it easy to migrate to C++20 modules once
+that feature is accepted by all compilers (as of January 2024, it is still not the case). Moreover, the codebase relies heavily on
+_RAII_ techniques to make object lifetimes explicit and easier to understand.
+The codebase uses modern features like `constexpr`, `std::initializer_list`, `std::string_view` and `std::span` wherever possible to optimize things.
+
+## Credits
++ Neutron Game Development - @Hurleveur
++ NGE Engine Development - @felinis (Moczulski Alan)
++ Some utility scripts from [LearnOpenGL](https://learnopengl.com).
 
 Textures in `/bin/textures` are either royalty free or made by us.
 
-## Building the project for Windows/Linux
-Run the CMake script:
+## Building the project for Windows or Linux
+Run the following commands to build in Release mode:
 ```shell
 mkdir build
 cmake -S . -B build
