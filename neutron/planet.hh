@@ -12,8 +12,6 @@ using glm::vec2;
 using glm::vec3;
 using glm::vec4;
 
-constexpr float PI = std::acos(-1.0f);
-
 GLuint generateMipmappedTexture(const std::string_view& imagePath) {
     int width, height, nrChannels;
     unsigned char* data = stbi_load(imagePath.data(), &width, &height, &nrChannels, 4);

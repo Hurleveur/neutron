@@ -2,6 +2,7 @@
 
 // std headers
 #include <cstdint>
+#include <cstddef>
 
 using s8 = std::int8_t;
 using u8 = std::uint8_t;
