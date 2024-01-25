@@ -1,8 +1,8 @@
-#include "import.h"
+#include "import.hh"
 
-#include "textures.h"
-#include "planet.h"
-#include "particle_generator.h"
+#include "textures.hh"
+#include "planet.hh"
+#include "particle_generator.hh"
 
 #include <glad/glad.h>
 #include <learnopengl/shader.h>

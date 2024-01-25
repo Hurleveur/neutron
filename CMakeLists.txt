@@ -37,13 +37,12 @@ add_executable(neutron
 	# neutron game files
 	neutron/game.hh
 	neutron/import.cpp
-	neutron/import.h
+	neutron/import.hh
 	neutron/main.cc
 	neutron/particle_generator.cpp
-	neutron/particle_generator.h
-	neutron/planet.h
-	neutron/textures.cpp
-	neutron/textures.h
+	neutron/particle_generator.hh
+	neutron/planet.hh
+	neutron/textures.hh
 )
 target_include_directories(neutron PRIVATE ${CMAKE_SOURCE_DIR}/nge ${CMAKE_SOURCE_DIR}/nge/include)
 target_link_libraries(neutron PRIVATE ${LIBS})

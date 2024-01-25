@@ -6,7 +6,7 @@
 #pragma once
 
 // neutron headers
-#include "import.h"
+#include "import.hh"
 
 // engine headers
 #include "nge_graphics.hh"
@@ -183,7 +183,7 @@ public:
 
 		// view and projection matrix, with a depth sufficient so it doesn't crop objects - both are also multiplied here in advanced for optimisation
 		const nge::math::Matrix4& view = camera.GetViewMatrix();
-		const nge::math::Matrix4 projection = glm::perspective(glm::radians(camera.Zoom), (float) 1600 / (float) 1000, 1.0f, 1024.0f);
+		const nge::math::Matrix4 projection = glm::perspective(glm::radians(camera.Zoom), (float) 1600 / (float) 1000, 0.1f, 1024.0f);
 		const nge::math::Matrix4 viewProj = projection * view;
 
 		glDepthFunc(GL_LEQUAL);

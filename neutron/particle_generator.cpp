@@ -6,8 +6,8 @@
 ** Creative Commons, either version 4 of the License, or (at your
 ** option) any later version.
 ******************************************************************/
-#include "particle_generator.h"
-#include "import.h"
+#include "particle_generator.hh"
+#include "import.hh"
 #include <learnopengl/shader_m.h>
 
 using namespace glm;
