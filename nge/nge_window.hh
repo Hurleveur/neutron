@@ -108,18 +108,18 @@ namespace nge
 
 			glfwMakeContextCurrent(window);
 
-#if DEBUG_BUILD
-//			glEnable(GL_DEBUG_OUTPUT);
-//			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-//			glDebugMessageCallback(DebugCallbackFunction, nullptr);
-#endif
-
 			glfwSwapInterval(1); // enable vsync
 
 			EnableRawInput(window);
 
 			if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 				throw std::runtime_error("Failed to initialize GLAD.");
+
+#if 0 //DEBUG_BUILD
+			glEnable(GL_DEBUG_OUTPUT);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback(DebugCallbackFunction, nullptr);
+#endif
 		}
 
 		~Window()

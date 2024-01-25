@@ -3,16 +3,19 @@
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 
+// nge headers
+#include "nge_timing.hh"
+
 // This file creates and then manages objects, with the help of particle_generator.h in the case of particles, and planet.h to generate spheres.
 // texure.h is also used to import textures.
 
 class Shader;
 // Skybox management.
-void makeSkybox(Shader &skyboxShader);
-void drawSkybox(Shader &skyboxShader, const glm::mat4 &view, const glm::mat4 &projection);
+void makeSkybox(const Shader &skyboxShader);
+void drawSkybox(const Shader &skyboxShader, const glm::mat4 &view, const glm::mat4 &projection);
 // Particles management.
-void makeParticles(Shader &particleShader);
-void drawParticles(Shader &particleShader, float deltaTime);
+void makeParticles(const Shader &particleShader);
+void drawParticles(const Shader &particleShader, const nge::timing::Seconds deltaTime);
 
 class Planet {
 public:
@@ -31,7 +34,7 @@ public:
 	void Tick(double time);
 	float DistanceFrom(const Planet& object) const;
 	void makePlanet(const Shader& planetShader, Type type);
-	void SetShaderVariables(const Shader& planetShader, double time);
+	void SetShaderVariables(const Shader& planetShader, const nge::timing::Seconds time);
 
 public:
 	int mass = 100;

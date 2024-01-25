@@ -30,7 +30,11 @@ class NeutronGame final : public nge::WindowEventHandler
 	Camera camera;
 	bool firstMouse;
 
-	nge::timing::Seconds deltaTime;
+	bool w_key_pressed;
+	bool a_key_pressed;
+	bool s_key_pressed;
+	bool d_key_pressed;
+
 	nge::timing::Seconds lastFrame;
 
 	bool stop;
@@ -59,14 +63,14 @@ class NeutronGame final : public nge::WindowEventHandler
 	{
 		if (key_code == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 			needs_to_stop = true;
-		if (key_code == GLFW_KEY_W && action == GLFW_PRESS) //glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS
-			camera.ProcessKeyboard(FORWARD, deltaTime);
-		if (key_code == GLFW_KEY_S && action == GLFW_PRESS)
-			camera.ProcessKeyboard(BACKWARD, deltaTime);
-		if (key_code == GLFW_KEY_A && action == GLFW_PRESS)
-			camera.ProcessKeyboard(LEFT, deltaTime);
-		if (key_code == GLFW_KEY_D && action == GLFW_PRESS)
-			camera.ProcessKeyboard(RIGHT, deltaTime);
+		if (key_code == GLFW_KEY_W)
+			w_key_pressed = action;
+		if (key_code == GLFW_KEY_A)
+			a_key_pressed = action;
+		if (key_code == GLFW_KEY_S)
+			s_key_pressed = action;
+		if (key_code == GLFW_KEY_D)
+			d_key_pressed = action;
 
 		if (key_code == GLFW_KEY_T && action == GLFW_PRESS && stopTimeout <= 0.f)
 		{
@@ -114,7 +118,10 @@ public:
 		needs_to_stop(false),
 		camera(nge::math::Vector3(50.0f, 0.0f, 50.0f)),
 		firstMouse(true),
-		deltaTime(0.0f),
+		w_key_pressed(false),
+		a_key_pressed(false),
+		s_key_pressed(false),
+		d_key_pressed(false),
 		lastFrame(0.0f),
 		stop(false),
 		stopTimeout(0.0f),
@@ -141,8 +148,17 @@ public:
 
 	bool Tick(const float delta_time)
 	{
-		deltaTime = delta_time;
+		// process pending keyboard input
+		if (w_key_pressed)
+			camera.ProcessKeyboard(FORWARD, delta_time);
+		if (a_key_pressed)
+			camera.ProcessKeyboard(LEFT, delta_time);
+		if (s_key_pressed)
+			camera.ProcessKeyboard(BACKWARD, delta_time);
+		if (d_key_pressed)
+			camera.ProcessKeyboard(RIGHT, delta_time);
 
+		// do we need to stop immediately?
 		if (needs_to_stop)
 			return false;
 
@@ -156,7 +172,7 @@ public:
 		// we don't need to clear GL_COLOR_BUFFER_BIT due to the skybox being in the background
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		// Shader properties for all planets and the sun
+		// shader properties for all planets and the sun
 		planet_shader.use();
 		planet_shader.setVec3("light.position", 0.f, 0.f, 0.f);
 		planet_shader.setVec3("viewPos", camera.Position);
@@ -167,16 +183,19 @@ public:
 
 		// view and projection matrix, with a depth sufficient so it doesn't crop objects - both are also multiplied here in advanced for optimisation
 		const nge::math::Matrix4& view = camera.GetViewMatrix();
-		const nge::math::Matrix4 projection = glm::perspective(glm::radians(camera.Zoom), (float) 1600 / (float) 1000, 0.1f, 1024.0f);
+		const nge::math::Matrix4 projection = glm::perspective(glm::radians(camera.Zoom), (float) 1600 / (float) 1000, 1.0f, 1024.0f);
 		const nge::math::Matrix4 viewProj = projection * view;
-		planet_shader.setMat4("view_projection_matrix", viewProj);
+
+		glDepthFunc(GL_LEQUAL);
+		glEnable(GL_DEPTH_TEST);
 
 		// render all objects (model is calculated in the draw function itself)
+		planet_shader.setMat4("view_projection_matrix", viewProj);
 		planet_model.Set(); // TODO: encapsulate inside a PlanetRenderer class
 		for (const auto& object: objectList)
 		{
 			if (object.second)
-				object.first->SetShaderVariables(planet_shader, stop ? 0. : delta_time);
+				object.first->SetShaderVariables(planet_shader, stop ? 0.0f : delta_time);
 			planet_model.Draw();
 
 			// only the sun needs to be super bright, and its drawn first
@@ -184,12 +203,14 @@ public:
 		}
 		planet_model.Unset(); // TODO: encapsulate inside a PlanetRenderer class
 
+		drawSkybox(skybox_shader, view, projection);
+
+		// draw particles
 		particle_shader.use();
 		particle_shader.setMat4("view_projection_matrix", viewProj);
-		drawParticles(particle_shader, stop ? 0 : delta_time);
-
-		// draw skybox as last (optimisation, all depth buffer have been +- filled now)
-		drawSkybox(skybox_shader, view, projection);
+		glDisable(GL_DEPTH_TEST);
+		drawParticles(particle_shader, stop ? 0.0f : delta_time);
+		glEnable(GL_DEPTH_TEST);
 
 		return true;
 	}
