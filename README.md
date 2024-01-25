@@ -1,6 +1,9 @@
 # Neutron
 A solar system written in C++20 using OpenGL.
 
+## Screenshot
+<img src="docs/screen.png" width="800"/>
+
 ## Architecture
 While still a work-in-progress, the game and engine architecture is a combination of modern C++ techniques straight from the ISO C++ guidelines
 and recommendations. First of all, the codebase is organized in a header-only fashion, which makes it easy to migrate to C++20 modules once
