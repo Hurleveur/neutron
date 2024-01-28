@@ -18,6 +18,10 @@ namespace nge::physics
 	using Kilogram = float;
 	using Meter = float;
 
+	// TODO: too bad GLM does not support constexpr :(
+	static const math::Vector3 EARTH_GRAVITY_FORCE(0.0f, -9.81f, 0.0f);
+	static const math::Vector3 MOON_GRAVITY_FORCE(0.0f, -1.625f, 0.0f);
+
 #if 0
 	class AABBCollisionComponent
 	{
@@ -47,23 +51,30 @@ namespace nge::physics
 
 		float radius;
 
+		bool is_static;
+
 	public:
-		constexpr Body(const math::Vector3& location, const Kilogram mass, const Meter sphere_radius):
-			location(location), velocity(), force(), inv_mass(1.0f / mass), radius(sphere_radius)
+		constexpr Body(const math::Vector3& location, const Kilogram mass, const Meter sphere_radius, bool is_static = false):
+			location(location), velocity(), force(EARTH_GRAVITY_FORCE), inv_mass(1.0f / mass), radius(sphere_radius), is_static(is_static)
 		{}
 
 		const math::Vector3& GetLocation() const {return location;}
 //		float GetCollisionRadius() const {return collision.radius;}
 
-		void Integrate(const timing::Seconds time_step)
+		bool IsStatic() const {return is_static;}
+
+		virtual void Integrate(const timing::Seconds time_step)
 		{
+			if (is_static)
+				return;
+
 			const math::Vector3 body_acceleration = force * inv_mass;
 
 			// perform Euler integration (more error-prone, but fastest)
 			velocity += body_acceleration * time_step;
 			location += velocity * time_step;
 
-			force = math::Vector3(0.0f);
+//			force = math::Vector3(0.0f);
 		}
 
 		bool IsCollidingWith(const Body& other) const
@@ -85,7 +96,7 @@ namespace nge::physics
 			return glm::normalize(line_connecting_centers);
 		}
 
-		constexpr float COEFFICIENT_OF_RESTITUTION = 1.0f; // 1=perfectly elastic, no loss of energy
+		static constexpr float COEFFICIENT_OF_RESTITUTION = 1.0f; // 1=perfectly elastic, no loss of energy
 		void PerformCollisionResponse(Body& other)
 		{
 			const math::Vector3 collision_normal = ComputeContactNormal(other);
@@ -102,30 +113,30 @@ namespace nge::physics
 			// apply impulse
 			const math::Vector3 impulse = impulse_scale * collision_normal;
 			velocity -= inv_mass * impulse;
-			other.velocity += other.inv_mass * impulse;
+			if (!other.IsStatic())
+				other.velocity += other.inv_mass * impulse;
 		}
 	};
 
 	class Simulation
 	{
 		std::vector<Body> spherical_bodies;
-		std::vector<std::pair<Body, Body>> potential_collisions;
+		std::vector<std::pair<Body*, Body*>> potential_collisions;
 
-		// perform a broad phase collision prepass
-		void UpdatePotentialCollisions()
+		void CachePotentialCollisions()
 		{
 			// TODO: to reduce the number of pairs to check, we could implement spatial partitioning
 			// using a grid or an octree
-			for (const auto& body_a : spherical_bodies)
+			for (auto& body_a : spherical_bodies)
 			{
-				for (const auto& body_b : spherical_bodies)
+				for (auto& body_b : spherical_bodies)
 				{
 					// skip same body
 					if (&body_a == &body_b)
 						continue;
 
 					if (body_a.IsCollidingWith(body_b))
-						potential_collisions.emplace_back(body_a, body_b);
+						potential_collisions.emplace_back(&body_a, &body_b);
 				}
 			}
 		}
@@ -146,8 +157,9 @@ namespace nge::physics
 			{
 				auto& body_a = pair.first;
 				auto& body_b = pair.second;
-				body_a.PerformCollisionResponse(body_b);
+				body_a->PerformCollisionResponse(*body_b);
 			}
+			potential_collisions.clear();
 		}
 
 	public:
@@ -157,17 +169,17 @@ namespace nge::physics
 			potential_collisions.clear();
 		}
 
-		ID AddSphericalBody(const math::Vector3& location, const Kilogram mass, const Meter radius)
+		ID AddSphericalBody(const math::Vector3& location, const Kilogram mass, const Meter radius, bool is_static = false)
 		{
 			const ID id = spherical_bodies.size();
-			spherical_bodies.emplace_back(location, mass, radius);
+			spherical_bodies.emplace_back(location, mass, radius, is_static);
 			return id;
 		}
 
 		void Tick(const timing::Seconds time_step = 1.0f/30.0f)
 		{
-			UpdatePotentialCollisions();
 			UpdateDynamics(time_step);
+			CachePotentialCollisions();
 			PerformCollisionResponse(time_step);
 		}
 

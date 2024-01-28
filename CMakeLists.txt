@@ -53,4 +53,4 @@ elseif (UNIX)
 	set_target_properties(neutron PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 endif (WIN32)
 
-#add_subdirectory(tests)
+add_subdirectory(tests)
