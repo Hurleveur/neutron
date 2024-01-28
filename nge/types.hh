@@ -13,3 +13,6 @@ using u32 = std::uint32_t;
 using ssize = std::ptrdiff_t;
 using usize = std::size_t;
 using ascii = char;
+
+// generic resource identifier
+using ID = usize;

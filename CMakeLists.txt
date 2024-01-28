@@ -30,6 +30,7 @@ add_executable(neutron
 	nge/nge_graphics.hh
 	nge/nge_math.hh
 	nge/nge_memory.hh
+	nge/nge_physics.hh
 	nge/nge_timing.hh
 	nge/nge_window.hh
 	nge/types.hh
@@ -51,3 +52,5 @@ if (WIN32)
 elseif (UNIX)
 	set_target_properties(neutron PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 endif (WIN32)
+
+#add_subdirectory(tests)
