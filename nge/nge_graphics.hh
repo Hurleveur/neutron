@@ -68,17 +68,17 @@ namespace nge::graphics
 			glDeleteVertexArrays(1, &VAO);
 		}
 
-		void Set()
+		void Set() const
 		{
 			glBindVertexArray(VAO);
 		}
 
-		void Draw()
+		void Draw() const
 		{
 			glDrawElements(GL_TRIANGLES, (GLint)vertex_index_count, GL_UNSIGNED_SHORT, nullptr);
 		}
 
-		void Unset()
+		void Unset() const
 		{
 			glBindVertexArray(0);
 		}
