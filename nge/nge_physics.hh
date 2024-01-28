@@ -12,6 +12,7 @@
 
 // std headers
 #include <vector> // TEMPORARY, until we get nge::memory working
+#include <functional>
 
 namespace nge::physics
 {
@@ -123,6 +124,19 @@ namespace nge::physics
 		std::vector<Body> spherical_bodies;
 		std::vector<std::pair<Body*, Body*>> potential_collisions;
 
+		using ImpactCallback = std::function<void(Body*, Body*)>;
+		ImpactCallback impact_callback;
+
+		// perform the actual dynamics
+		void UpdateDynamics(const timing::Seconds time_step)
+		{
+			// update every body state
+			for (auto& body : spherical_bodies)
+			{
+				body.Integrate(time_step);
+			}
+		}
+
 		void CachePotentialCollisions()
 		{
 			// TODO: to reduce the number of pairs to check, we could implement spatial partitioning
@@ -141,23 +155,19 @@ namespace nge::physics
 			}
 		}
 
-		// perform the actual dynamics
-		void UpdateDynamics(const timing::Seconds time_step)
-		{
-			// update every body state
-			for (auto& body : spherical_bodies)
-			{
-				body.Integrate(time_step);
-			}
-		}
-
 		void PerformCollisionResponse(const timing::Seconds time_step)
 		{
 			for (auto& pair : potential_collisions)
 			{
 				auto& body_a = pair.first;
 				auto& body_b = pair.second;
+
+				// react to collision
 				body_a->PerformCollisionResponse(*body_b);
+
+				// trigger a callback if there is one
+				if (impact_callback)
+					impact_callback(body_a, body_b);
 			}
 			potential_collisions.clear();
 		}
@@ -168,6 +178,8 @@ namespace nge::physics
 			spherical_bodies.clear();
 			potential_collisions.clear();
 		}
+
+		void SetImpactCallback(const ImpactCallback& callback) {impact_callback = callback;}
 
 		ID AddSphericalBody(const math::Vector3& location, const Kilogram mass, const Meter radius, bool is_static = false)
 		{
