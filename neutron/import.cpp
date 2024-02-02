@@ -88,7 +88,7 @@ void makeSkybox(const Shader& skyboxShader)
 void drawSkybox(const Shader& skyboxShader, const mat4& view, const mat4& projection)
 {
 	skyboxShader.use();
-	skyboxShader.setMat4("view_projection_matrix", mat3(projection * view));
+	skyboxShader.setMat4("view_projection_matrix", projection * view);
 	// skybox cube
 	glBindVertexArray(skyboxVAO);
 	glActiveTexture(GL_TEXTURE0);
