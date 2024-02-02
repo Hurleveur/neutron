@@ -13,7 +13,7 @@ struct Material {
 
 struct Light {
     vec3 position;
-    vec3 ambient;
+    vec3 ambient; // TODO: only one float needed here
     vec3 diffuse;
     vec3 specular;
 };
@@ -28,17 +28,16 @@ void main()
     vec3 lightDir = normalize(light.position - FragPos);
     vec3 tangent_space_light_direction = TBN * lightDir;
 
-    // fake Oren-Nayar diffuse attenuation
-    float light_intensity = pow(dot(tangent_space_normal, tangent_space_light_direction), 0.8);
+    float light_intensity = max(0.0, dot(tangent_space_normal, tangent_space_light_direction));
     vec3 diffuse = light_intensity * texture(material.diffuse, TexCoords).rgb;
+    vec3 ambient = light.ambient.r * texture(material.diffuse, TexCoords).rgb;
 
     // specular
     vec3 viewDir = TBN * normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-tangent_space_light_direction, tangent_space_normal);
     // use default shininess
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4.0);
-    vec3 specular = spec * texture(material.specular, TexCoords).rgb;
+    vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 
-//    FragColor = vec4((ambient + diffuse + specular), 1.0);
-    FragColor = vec4(diffuse + specular, 1.0);
+    FragColor = vec4(ambient + diffuse, 1.0);
 }

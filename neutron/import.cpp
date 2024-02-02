@@ -60,7 +60,6 @@ unsigned int cubemapTexture;
 
 ParticleGenerator* Particles;
 
-
 void makeSkybox(const Shader& skyboxShader)
 {
 	glGenVertexArrays(1, &skyboxVAO);
@@ -111,7 +110,6 @@ void drawParticles(const Shader& particleShader, const nge::timing::Seconds delt
 	Particles->Draw(particleShader);
 }
 
-
 // Planet (part that would be common to multiple space objects first)
 void Planet::Tick(double time)
 {
@@ -119,7 +117,6 @@ void Planet::Tick(double time)
 	y += vY;
 	z += vZ;
 }
-
 
 float Planet::DistanceFrom(const Planet& object) const
 {
@@ -132,53 +129,46 @@ float Planet::DistanceFrom(const Planet& object) const
 	);
 }
 
-
 Planet::Planet(int mass, float radius, double posX, double posY, double posZ, double speedX, double speedY,
                double speedZ, Shader& planetShader, Type type) : mass(mass), radius(radius), x(posX), y(posY), z(posZ),
                                                                  vX(speedX), vY(speedY), vZ(speedZ)
-{
-	makePlanet(planetShader, type);
-};
-
-void Planet::makePlanet(const Shader& planetShader, Type type)
 {
 	std::string textureFile;
 	std::string name;
 	switch (type)
 	{
-		case Type::Sun:
-			textureFile = "textures/planets/sun/";
-			name = "sun.jpg";
-			break;
-		case Type::Moon:
-			textureFile = "textures/planets/moon/";
-			name = "moon.jpg";
-			break;
-		case Type::Mercury:
-			textureFile = "textures/planets/mercury/";
-			name = "mercury.png";
-			break;
-		case Type::Mars:
-			textureFile = "textures/planets/mars/";
-			name = "mars.png";
-			break;
-		case Type::Earth:
-		default:
-			textureFile = "textures/planets/earth/";
-			name = "earth.jpg";
-			break;
+	case Type::Sun:
+		textureFile = "textures/planets/sun/";
+		name = "sun.png";
+		break;
+	case Type::Moon:
+		textureFile = "textures/planets/moon/";
+		name = "moon.jpg";
+		break;
+	case Type::Mercury:
+		textureFile = "textures/planets/mercury/";
+		name = "mercury.png";
+		break;
+	case Type::Mars:
+		textureFile = "textures/planets/mars/";
+		name = "mars.jpg";
+		break;
+	case Type::Earth:
+	default:
+		textureFile = "textures/planets/earth/";
+		name = "earth.jpg";
+		break;
 	}
 	planetTextureID = generateMipmappedTexture(textureFile + name);
-	normalMapID = loadNormalMap(textureFile + "norm.png");
-	specMapID = loadNormalMap(textureFile + "spec.png");
+	normalMapID = generateMipmappedTexture(textureFile + "norm.png");
+	specMapID = generateMipmappedTexture(textureFile + "spec.png");
 
 	planetShader.use();
 	//planetShader.setInt(texture, 0);
 	planetShader.setInt("material.diffuse", 0);
 	planetShader.setInt("material.normal", 1);
 	planetShader.setInt("material.specular", 2);
-}
-
+};
 
 void Planet::SetShaderVariables(const Shader& planetShader, const nge::timing::Seconds time)
 {

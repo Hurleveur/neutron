@@ -40,8 +40,7 @@ class NeutronGame final : public nge::WindowEventHandler
 	bool stop;
 	float stopTimeout;
 
-	// the objects and if they should be rendered
-	std::map<Planet *, bool> objectList;
+	std::vector<Planet> planets;
 
 	Shader skybox_shader;
 	Shader particle_shader;
@@ -127,7 +126,7 @@ public:
 		lastFrame(0.0f),
 		stop(false),
 		stopTimeout(0.0f),
-		objectList(),
+		planets(),
 		skybox_shader("shaders/skybox.vs", "shaders/skybox.fs"),
 		particle_shader("shaders/particle.vs", "shaders/particle.fs"),
 		planet_shader("shaders/shader.vs", "shaders/shader.fs"),
@@ -141,11 +140,11 @@ public:
 		makeSkybox(skybox_shader);
 		makeParticles(particle_shader);
 
-		objectList[&sun] = true;
-		objectList[&mercury] = true;
-		objectList[&earth] = true;
-		objectList[&moon] = true;
-		objectList[&mars] = true;
+		planets.emplace_back(sun);
+		planets.emplace_back(mercury);
+		planets.emplace_back(earth);
+		planets.emplace_back(moon);
+		planets.emplace_back(mars);
 	}
 
 	bool Tick(const float delta_time)
@@ -179,7 +178,7 @@ public:
 		planet_shader.setVec3("light.position", 0.f, 0.f, 0.f);
 		planet_shader.setVec3("viewPos", camera.Position);
 		// full on sunlight - will be reduced after the sun is drawn
-		planet_shader.setVec3("light.ambient", 1.f, 1.f, 1.f);
+		planet_shader.setVec3("light.ambient", .8f, .8f, .8f);
 		planet_shader.setVec3("light.diffuse", .7f, .7f, .7f);
 		planet_shader.setVec3("light.specular", .5f, .5f, .5f);
 
@@ -194,14 +193,13 @@ public:
 		// render all objects (model is calculated in the draw function itself)
 		planet_shader.setMat4("view_projection_matrix", viewProj);
 		planet_model.Set(); // TODO: encapsulate inside a PlanetRenderer class
-		for (const auto& object: objectList)
+		for (auto& planet: planets)
 		{
-			if (object.second)
-				object.first->SetShaderVariables(planet_shader, stop ? 0.0f : delta_time);
+			planet.SetShaderVariables(planet_shader, stop ? 0.0f : delta_time);
 			planet_model.Draw();
 
 			// only the sun needs to be super bright, and its drawn first
-			planet_shader.setVec3("light.ambient", .2f, .2f, .2f);
+			planet_shader.setVec3("light.ambient", .1f, .1f, .1f);
 		}
 		planet_model.Unset(); // TODO: encapsulate inside a PlanetRenderer class
 
@@ -223,76 +221,74 @@ public:
 			return;
 
 		// gravitational constant
-		constexpr double GRAVITATIONAL = 6.674 / 100000000000;
+		constexpr float GRAVITATIONAL = 6.674 / 100000000000;
 		// apply gravity
 		// auto is Planet, bool, where the bool states if the objects are active -
 		// they get turned off when they have collided with the sun, in which case they are to be ignored
-		for (const auto& object: objectList)
+		for (auto& planet_a: planets)
 		{
 			// all objects get pull from other objects - except themselves and disabled objects
-			for (const auto& otherObject: objectList)
+			for (const auto& planet_b : planets)
 			{
 				// the sun and other bigger objects wont be affected by the earth and the earth wont be by the moon or by other same weight planets - for simplicity, and optimisation
-				if (!object.second || !otherObject.second || otherObject.first->mass <= object.first->mass)
+				if (planet_b.mass <= planet_a.mass)
 					continue;
-				double distance = object.first->DistanceFrom(*otherObject.first);
+				double distance = planet_a.DistanceFrom(planet_b);
 				// hack: the earth should have a pull much stronger on the moon, because its supposed to be much closer (but we wouldn't see anything if it was real scale)
-				if (object.first->mass * otherObject.first->mass == EARTH_MOON_MASS)
+				if (planet_a.mass * planet_b.mass == EARTH_MOON_MASS)
 					distance /= 100;
 
-				const double pull = otherObject.first->mass * GRAVITATIONAL / (distance * distance) * time;
-				object.first->vX += pull * ((otherObject.first->x > object.first->x) ? 1 : -1);
-				object.first->vY += pull * ((otherObject.first->y > object.first->y) ? 1 : -1);
-				object.first->vZ += pull * ((otherObject.first->z > object.first->z) ? 1 : -1);
+				const float pull = planet_b.mass * GRAVITATIONAL / (distance * distance) * time;
+				planet_a.vX += pull * ((planet_b.x > planet_a.x) ? 1 : -1);
+				planet_a.vY += pull * ((planet_b.y > planet_a.y) ? 1 : -1);
+				planet_a.vZ += pull * ((planet_b.z > planet_a.z) ? 1 : -1);
 			}
 		}
 
 		// check for collisions and handle them
-		for (const auto& object: objectList)
+		for (auto& planet_a: planets)
 		{
-			if (!object.second)
-				continue;
-			for (const auto& otherObject: objectList)
+			for (auto& planet_b: planets)
 			{
-				if (!object.second || otherObject == object)
+				if (&planet_a == &planet_b)
 					continue;
-				else if (object.first->DistanceFrom(*otherObject.first) < (
-							 object.first->radius + otherObject.first->radius))
+
+				if (planet_a.DistanceFrom(planet_b) < (planet_a.radius + planet_b.radius))
 				{
 					// a collision with the sun is fatal
-					if (object.first->mass == SUN_MASS)
-						objectList[otherObject.first] = false;
-					else if (otherObject.first->mass == SUN_MASS)
-						objectList[object.first] = false;
+//					if (planet_a.mass == SUN_MASS)
+//						objectList[planet_b] = false;
+//					else if (planet_b.mass == SUN_MASS)
+//						objectList[planet_a] = false;
 					// otherwise both objects move away
-					else
+//					else
 					{
 						// determine the strength of the collision
-						const double factor = otherObject.first->mass * object.first->mass * std::sqrt(
-											(object.first->vX - otherObject.first->vX) * (
-												object.first->vX - otherObject.first->vX) +
-											(object.first->vY - otherObject.first->vY) * (
-												object.first->vY - otherObject.first->vY) +
-											(object.first->vZ - otherObject.first->vZ) * (
-												object.first->vZ - otherObject.first->vZ)
+						const double factor = planet_b.mass * planet_a.mass * std::sqrt(
+											(planet_a.vX - planet_b.vX) * (
+												planet_a.vX - planet_b.vX) +
+											(planet_a.vY - planet_b.vY) * (
+												planet_a.vY - planet_b.vY) +
+											(planet_a.vZ - planet_b.vZ) * (
+												planet_a.vZ - planet_b.vZ)
 										);
 						// make them move away from each other with the strength of the impact
-						otherObject.first->vX += factor / otherObject.first->mass * (otherObject.first->vX > 0 ? -1 : 1);
-						otherObject.first->vY += factor / otherObject.first->mass * (otherObject.first->vY > 0 ? -1 : 1);
-						otherObject.first->vZ += factor / otherObject.first->mass * (otherObject.first->vZ > 0 ? -1 : 1);
-						object.first->vX += factor / object.first->mass * (object.first->vX > 0 ? -1 : 1);
-						object.first->vY += factor / object.first->mass * (object.first->vY > 0 ? -1 : 1);
-						object.first->vZ += factor / object.first->mass * (object.first->vZ > 0 ? -1 : 1);
+						planet_b.vX += factor / planet_b.mass * (planet_b.vX > 0 ? -1 : 1);
+						planet_b.vY += factor / planet_b.mass * (planet_b.vY > 0 ? -1 : 1);
+						planet_b.vZ += factor / planet_b.mass * (planet_b.vZ > 0 ? -1 : 1);
+						planet_a.vX += factor / planet_a.mass * (planet_a.vX > 0 ? -1 : 1);
+						planet_a.vY += factor / planet_a.mass * (planet_a.vY > 0 ? -1 : 1);
+						planet_a.vZ += factor / planet_a.mass * (planet_a.vZ > 0 ? -1 : 1);
 						// move them away enough so they're no longer in collision
-						object.first->Tick(time);
-						otherObject.first->Tick(time);
+						planet_a.Tick(time);
+						planet_b.Tick(time);
 					}
 				}
 			}
 		}
 
-		// move all objects
-		for (const auto& object: objectList)
-			object.first->Tick(time);
+		// update all planets
+		for (auto& planet : planets)
+			planet.Tick(time);
 	}
 };
