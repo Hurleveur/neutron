@@ -92,13 +92,14 @@ class NeutronGame final : public nge::WindowEventHandler
 	// factory function to create a Model given a file path to an MDL file
 	static nge::graphics::Model CreateModelFromFile(const std::string_view& file_path)
 	{
-		std::ifstream mdl_file(file_path.data());
+		std::ifstream mdl_file(file_path.data(), std::ios::binary);
 		if (!mdl_file.is_open())
 			throw std::runtime_error("Failed to open an MDL file for reading.");
 
 		// read vertices
 		u32 vertex_count;
 		mdl_file.read((char *) &vertex_count, sizeof(u32));
+		assert(vertex_count < 10000); // sanity check
 		std::vector<nge::graphics::VertexFormat> vertices;
 		vertices.resize(vertex_count);
 		mdl_file.read((char *) vertices.data(), vertex_count * sizeof(nge::graphics::VertexFormat));
@@ -106,6 +107,7 @@ class NeutronGame final : public nge::WindowEventHandler
 		// read corner indices
 		u32 vertex_index_count;
 		mdl_file.read((char *) &vertex_index_count, sizeof(u32));
+		assert(vertex_index_count < 10000); // sanity check
 		std::vector<u16> vertex_indices;
 		vertex_indices.resize(vertex_index_count);
 		mdl_file.read((char *) vertex_indices.data(), vertex_index_count * sizeof(u16));

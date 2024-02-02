@@ -1,1 +1,4 @@
 neutron
+*.exe
+*.ilk
+*.pdb
